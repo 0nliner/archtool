@@ -8,7 +8,7 @@ setup(
         author="Aleksandr Chudaikin",
         author_email='aleksandrchudaikindev@gmail.com',
         # packages=find_packages(exclude=['src/tests']),
-        package_dir={'': 'src'},
+        package_dir={'': 'injector'},
         url='https://github.com/0nliner/injector',
         keywords='',
 
