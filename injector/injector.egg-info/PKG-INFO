@@ -1,0 +1,14 @@
+Metadata-Version: 2.1
+Name: injector
+Version: 0.1
+Home-page: https://github.com/0nliner/injector
+Author: Aleksandr Chudaikin
+Author-email: aleksandrchudaikindev@gmail.com
+License: MIT
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: DevOps
+Classifier: Topic :: Software Development :: DevOps
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Requires-Python: >=3.8

@@ -7,4 +7,3 @@ test_data.txt
 /app/services/geckodriver
 /static/
 dist/
-/injector/injector.egg-info/
