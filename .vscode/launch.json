@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "run example project",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/example_project/app.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+ 
+        }
+    ]
+}

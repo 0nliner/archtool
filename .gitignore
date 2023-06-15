@@ -1,0 +1,8 @@
+/venv/
+.idea*
+*.pyc
+/.pytest_cache/
+*.log
+test_data.txt
+/app/services/geckodriver
+/static/
