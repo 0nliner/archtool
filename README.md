@@ -16,3 +16,8 @@ pip install -r dev_requirements.txt
 ```
 python -m build
 ```
+
+4. Поставить пакет
+```
+pip install --use-deprecated=legacy-resolver git+https://0nliner:<токен авторизации>@github.com/0nliner/injector.git#egg=injector.egg-info
+```

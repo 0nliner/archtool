@@ -1,8 +1,1 @@
-__init__
-dependecy_injector
-example_project
-exceptions
-global_types
-interfaces
-layers
-utils
+injector
