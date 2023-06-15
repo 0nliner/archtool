@@ -1,12 +1,12 @@
 from typing import List
 from inspect import isabstract
 
-from ..interfaces.di_layer import DILayerInterface
+from interfaces.di_layer import DILayerInterface
 from global_types import InterfaceT, AppModule, AppModules
 from utils import get_subclasses_from_module, check_is_not_interface
 
-from ..exceptions import (MultipleRealizationsException,
-                          RealizationNotFount)
+from exceptions import (MultipleRealizationsException,
+                        RealizationNotFount)
 
 
 class DILayer(DILayerInterface):
@@ -34,7 +34,8 @@ class DILayer(DILayerInterface):
         if realizations_found > 1:
             raise MultipleRealizationsException(str(f"{module:}\n\n",
                                                     f"{interface:}\n\n",
-                                                    f"{module_layer_objects:}"))
+                                                    f"{module_layer_objects:}")
+                                                )
 
         elif not realizations_found:
             raise RealizationNotFount((f"{module:}\n",
@@ -59,19 +60,9 @@ class DILayer(DILayerInterface):
         for module in app_modules:
             interfaces = self.get_module_interfaces(module=module)
             for interface in interfaces:
-                # TODO: добавить валидацию на отсутствие None значений выше
-
-                # ошибки тут игнорить и пропускать говёные интерфейсы из 
-                # других модулей
-
-                # либо ещё поресёрчить как узнать модуль, где описан объект,
-                # но сомнительно
-
-                # ещё можно попробовать вытащить все импортированные объекы,
-                # сделать diff, пройтись по всем объектам, которые
-                # задекларированы в файле, а не импортнуты
-                realization = self.get_interface_realization(module=module,
-                                                             interface=interface)
+                realization = self.get_interface_realization(
+                    module=module,
+                    interface=interface)
                 interfaces_to_realizations.update({interface: realization})
 
         return interfaces_to_realizations

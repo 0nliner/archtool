@@ -1,3 +1,7 @@
+class CheckFailedException(Exception):
+    ...
+
+
 class UsedButIgnoredError(Exception):
     ...
 

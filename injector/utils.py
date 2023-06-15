@@ -7,7 +7,7 @@ from functools import singledispatch
 from re import sub
 
 from pathlib import Path
-from bundler.exceptions import CheckFailedException
+from exceptions import CheckFailedException
 from global_types import (
         Dependecy,
         ContainerT,

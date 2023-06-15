@@ -1,12 +1,5 @@
-from pathlib import Path
-import sys
-
-root = Path.cwd()
-sys.path.extend([root.as_posix(),
-                 (root / "dependencies_injector").as_posix()])
-
-from bundler.dependency_injector import DependecyInjector
-from global_types import AppModule
+from injector.dependecy_injector import DependecyInjector
+from injector.global_types import AppModule
 
 from layers import (ServicesLayer,
                     ReposLayer)

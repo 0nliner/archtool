@@ -1,4 +1,4 @@
-from bundler.dependency_injector.layers import DILayer
+from injector.layers import DILayer
 
 from layers_interfaces import (
     ServiceInterface,
