@@ -1,8 +1,8 @@
-from example_project.test_module_1.interfaces import (TestService1Interface,
-                                                      TestRepo1Interface)
+from test_module_1.interfaces import (TestService1Interface,
+                                      TestRepo1Interface)
 
-from example_project.test_module_2.interfaces import (TestRepo2Interface,
-                                                      TestService2Interface)
+from test_module_2.interfaces import (TestRepo2Interface,
+                                      TestService2Interface)
 
 
 class TestService1(TestService1Interface):

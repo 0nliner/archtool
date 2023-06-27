@@ -5,10 +5,13 @@
             "name": "run example project",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/example_project/app.py",
+            "program": "${workspaceFolder}/examples/example_project/app.py",
             "console": "integratedTerminal",
-            "justMyCode": true
- 
+            "justMyCode": true,
+            ""
+            // "env": {
+                // "PYTHONPATH": "${PYTHONPATH}:/home/godmod/code/PORT80/injector/injector"
+            // }
         }
     ]
 }
