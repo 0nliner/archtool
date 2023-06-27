@@ -7,13 +7,17 @@ from functools import singledispatch
 from re import sub
 
 from pathlib import Path
-from exceptions import CheckFailedException
-from global_types import (
+from injector.exceptions import (CheckFailedException,
+                                 MultipleRealizationsException,
+                                 RealizationNotFount)
+from injector.global_types import (
         Dependecy,
         ContainerT,
         DependeciesT,
         AppModule,
-        DEPENDENCY_KEY)
+        AppModules,
+        DEPENDENCY_KEY,
+        InterfaceT)
 
 
 def string_to_snake_case(string: str):
@@ -140,7 +144,6 @@ def serialize_dep_key(key: DEPENDENCY_KEY) -> str:
     return f"{resolve_import_path(key.__module__)}.{key.__name__}"
 
 
-# TODO: мб перетащить в inspectors
 def get_dependencies(container: ContainerT) -> DependeciesT:
     """
     Возвращает зависимости контейнера
@@ -159,3 +162,89 @@ def get_dependencies(container: ContainerT) -> DependeciesT:
             new_dep = Dependecy(name=dependency_name, asked=dep_key)
             dependencies.append(new_dep)
     return dependencies
+
+
+def get_module_interfaces(module: AppModule, superclass: object
+                          ) -> List[InterfaceT]:
+    """
+    Возвращает
+    """
+    layer_module_path = f"{module.import_path}.interfaces"
+    results = get_subclasses_from_module(module_path=layer_module_path,
+                                         superclass=superclass,
+                                         addiction_checks=[isabstract])
+    return results
+
+
+def get_interface_realization(module: AppModule,
+                              name_pattern: str,
+                              interface: InterfaceT) -> type:
+    """
+    Возвращает реализацию интерфейса в рамках модуля слоя
+
+    ARGS:
+     - module - модуль в котором ищеим реализации интерфейсов
+     - name_pattern - паттерн имени файлов по которым ведётся поиск
+
+
+    Возможные ошибки:
+     - MultipleRealizationsException - нейдено больше одного класса,
+                                       наследуемого от интерфейса
+
+     - RealizationNotFount - реализация интерфейса не найдена
+    """
+    # TODO: сделать name pattern регулярным выражением
+    # TODO: функция занимается поиском не только интерфейсов,
+    #       если я не путаюсь. Если так, её аргументы и название
+    #       надо переименовать
+    module_path = f"{module.import_path}.{name_pattern}"
+    module_layer_objects = get_subclasses_from_module(
+        module_path=module_path,
+        superclass=interface,
+        addiction_checks=[check_is_not_interface])
+
+    realizations_found = len(module_layer_objects)
+    if realizations_found > 1:
+        raise MultipleRealizationsException(str(f"{module:}\n\n",
+                                                f"{interface:}\n\n",
+                                                f"{module_layer_objects:}")
+                                            )
+
+    elif not realizations_found:
+        raise RealizationNotFount((f"{module:}\n",
+                                   f"{interface:}\n"))
+
+    interface_realization = module_layer_objects[0]
+    return interface_realization
+
+
+def get_all_interfaces(app_modules: AppModules):
+    """
+    Достаёт все интерфейсы слоя из перечисленных модулей
+    """
+    interfaces = []
+    for module in app_modules:
+        module_interfaces = get_module_interfaces(module=module)
+        interfaces.extend(module_interfaces)
+    return interfaces
+
+
+def get_all_interfaces_and_realizations(app_modules: AppModules,
+                                        superclass,
+                                        name_pattern: str
+                                        ) -> dict[InterfaceT, type]:
+    """
+    Достаёт все интерфейсы и классы их реализующие
+    """
+    interfaces_to_realizations = {}
+    for module in app_modules:
+        interfaces = get_module_interfaces(module=module,
+                                           superclass=superclass)
+        for interface in interfaces:
+            realization = get_interface_realization(
+                module=module,
+                interface=interface,
+                name_pattern=name_pattern)
+            interfaces_to_realizations.update({interface: realization})
+
+    return interfaces_to_realizations

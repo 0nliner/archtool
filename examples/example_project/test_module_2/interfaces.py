@@ -1,10 +1,9 @@
 from abc import abstractmethod, ABCMeta
-from layers_interfaces import (ServiceInterface,
-                               RepositoryInterface)
+from injector.layers.default_layer_interfaces import (ABCService,
+                                                      ABCRepo)
 
 
-class TestService1Interface(ServiceInterface, metaclass=ABCMeta):
-
+class TestService2Interface(ABCService, metaclass=ABCMeta):
     @abstractmethod
     def some_buiness_logic(self):
         """
@@ -12,8 +11,7 @@ class TestService1Interface(ServiceInterface, metaclass=ABCMeta):
         """
 
 
-class TestRepo1Interface(RepositoryInterface, metaclass=ABCMeta):
-
+class TestRepo2Interface(ABCRepo, metaclass=ABCMeta):
     @abstractmethod
     def some_bd_logic(self):
         """
