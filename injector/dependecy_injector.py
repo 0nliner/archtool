@@ -5,54 +5,58 @@ from .exceptions import (DependecyDuplicate,
                          )
 
 from .interfaces import (DependecyInjectorInterface,
-                         LayerInterface,
-                         DILayerInterface
+                         LayerInterface
                          )
 
-from global_types import (AppModules,
-                          ContainerT,
-                          DEPENDENCY_KEY)
+from injector.layers.default_layers import default_layers
+from injector.layers import Layer
+from injector.global_types import (AppModules,
+                                   ContainerT,
+                                   DEPENDENCY_KEY)
 
-from utils import (get_dependencies,
-                   serialize_dep_key)
+from injector.utils import (get_dependencies,
+                            serialize_dep_key,
+                            get_all_interfaces_and_realizations)
 
 
 # TODO: нахерачить документацию по тому как этим пользоваться
-
+# TODO: валидации:
+#       однонаправленность импортов
 
 class DependecyInjector(DependecyInjectorInterface):
     def __init__(self,
                  modules_list: AppModules,
-                 layers: List[LayerInterface]):
+                 layers: List[LayerInterface] = None):
 
         self.modules_list = modules_list
-        # TODO: при итерации слоёв, зависимость однонаправлена снизу вверх
-        self.layers = layers
+        self.layers = layers if layers else default_layers
+        # инициализируем классы слоёв
+        # TODO: позже нужно вынести инициализацию.
+        #       Это должен делать пользователь
+        self.layers = [layer() for layer in self.layers]
         self._dependencies: Dict[DEPENDENCY_KEY, object] = {}
 
     def inject(self):
-        # TODO: проходимся по всем di слоям
         for layer in self.layers:
-            if issubclass(type(layer), DILayerInterface):
-                layer_deps = layer.get_all_interfaces_and_realizations(
-                    app_modules=self.modules_list)
+            if issubclass(type(layer), Layer):
+                # TODO: сделать аннотирование на components
+                # TODO: добавить __iter__ на Components класс
+                for component_group in layer.component_groups:
+                    component_group_deps = get_all_interfaces_and_realizations(
+                        app_modules=self.modules_list,
+                        name_pattern=component_group.module_name_regex,
+                        superclass=component_group.superclass)
 
-                # добавляем зависимости слоя в глобальные зависимости
-                for dep_key, dep_class in layer_deps.items():
-                    # инициализируем классы, подставляем как зависимость
-                    dep_instance = dep_class()
-                    self._reg_dependecy(key=dep_key,
-                                        value=dep_instance)
+                    # добавляем зависимости слоя в глобальные зависимости
+                    for dep_key, dep_class in component_group_deps.items():
+                        # инициализируем классы, подставляем как зависимость
+                        dep_instance = dep_class()
+                        self._reg_dependecy(key=dep_key,
+                                            value=dep_instance)
 
         # инжектим
         for dep_interface, dep_instance in self._dependencies.items():
             self._inject_dependencies(container=dep_instance)
-
-        # TODO: убрать при добавлении функционала слоёв
-        # инжектим ссылку на инстанс инжектора во вьюхи
-        # сейчас это нужно в рамках рефакторинга существующего легаси
-        # for view in self.views:
-            # view.injector = self
 
     def _inject_dependencies(self, container: ContainerT) -> None:
         """
@@ -63,16 +67,6 @@ class DependecyInjector(DependecyInjectorInterface):
         """
         deps = get_dependencies(container=container)
         for dep in deps:
-            # TODO: проверки на уровни лучше выделить в отдельный метод
-            # валидации
-            # is_using_service_from_repo =\
-            #       all([type(container) is RepositoryInterface,
-            #            type(dep.asked) is ServiceInterface])
-
-            # if is_using_service_from_repo:
-            #     raise TopLevelLayerUsingException((f"{container:}\n",
-            #                                        f"{dep:}"))
-
             # пытаемся найти зависимость
             try:
                 dependency_to_inject = self.get_dependency(key=dep.asked)

@@ -1,68 +1,104 @@
-from typing import List
-from inspect import isabstract
+from abc import abstractmethod
+from typing import List, Generator
+from inspect import isclass
 
-from interfaces.di_layer import DILayerInterface
-from global_types import InterfaceT, AppModule, AppModules
-from utils import get_subclasses_from_module, check_is_not_interface
-
-from exceptions import (MultipleRealizationsException,
-                        RealizationNotFount)
+from injector.components.default_component import ComponentPatternBase
 
 
-class DILayer(DILayerInterface):
-    def get_module_interfaces(self, module: AppModule) -> List[InterfaceT]:
-        layer_module_path = f"{module.import_path}.interfaces"
-        results = get_subclasses_from_module(module_path=layer_module_path,
-                                             superclass=self.superclass,
-                                             addiction_checks=[isabstract])
+class ValidationError(Exception):
+    ...
 
-        return results
 
-    def get_interface_realization(self,
-                                  module: AppModule,
-                                  interface: InterfaceT) -> type:
+def is_component_pattern_base(obj):
+    return isclass(obj) and issubclass(obj, ComponentPatternBase)
+
+
+class ComponentsGroupBase:
+    """
+    Компоненты описаные в классе Layer наследованы от этого класса
+    """
+
+    @property
+    def component_patterns(self) -> List[ComponentPatternBase]:
+        child_objects = dir(self)
+        child_objects.remove("component_patterns")
+
+        component_patterns = [
+             getattr(self, key) for key in child_objects
+             if is_component_pattern_base(type(getattr(self, key)))
+        ]
+        return component_patterns
+
+    def __iter__(self) -> Generator[ComponentPatternBase, None, None]:
+        for component_pattern in self.component_patterns:
+            yield component_pattern
+
+
+class LayerBase(type):
+    def __new__(cls, name, bases, attrs, **kwargs):
+        super_new = super().__new__
+        parents = [b for b in bases if isinstance(b, LayerBase)]
+        if not parents:
+            return super_new(cls, name, bases, attrs)
+
+        # проверяем обязательные поля
+        required_fields = set(["depends_on"])
+        attrs_set = set(attrs.keys())
+        attrs_intersection = required_fields.intersection(attrs_set)
+        is_all_decleared = attrs_intersection == required_fields
+        err_msg = ""
+
+        if not is_all_decleared:
+            not_defined = required_fields.difference(attrs_intersection)
+            err_msg = (f"Fields {not_defined} does not"
+                       f" decleared in {attrs['__qualname__']}")
+
+        # проверяем есть ли класс Components
+        if "Components" not in attrs:
+            components_err_message = ("\n\nComponents child"
+                                      " class required, but not defined")
+            err_msg += components_err_message
+
+        if err_msg:
+            raise ValidationError(err_msg)
+
+        # подготавливаем атрибуты нового класса
+
+        # создаём новый класс, наследуем от ComponentsGroupBase
+        # и уже существующего в наследнике
+        components_subclass = attrs.pop("Components")
+        components_class = type("ComponentsGroup",
+                                (ComponentsGroupBase,
+                                 components_subclass,
+                                 object),
+                                {})
+        components_instance = components_class()
+
+        module = attrs.pop("__module__")
+        depends_on = attrs.pop("depends_on")
+
+        new_attrs = {"__module__": module,
+                     "component_groups": components_instance,
+                     "depends_on": depends_on}
+
+        new_layer_class = super_new(cls, name, bases, new_attrs)
+        new_layer_class.__new__ = super(object).__new__
+        return new_layer_class
+
+    @classmethod
+    def __or__(cls, other: 'LayerBase'):
+        return frozenset(cls, other)
+
+    @property
+    @abstractmethod
+    def component_groups(self) -> List[ComponentsGroupBase]:
         """
-        Достаёт реализацию интерфейса в рамках модуля слоя
+        Возвращает список групп компонентов, инициализированные в рамках слоя
         """
-        module_path = f"{module.import_path}.{self.module_name_pattern}"
-        module_layer_objects = get_subclasses_from_module(
-            module_path=module_path,
-            superclass=interface,
-            addiction_checks=[check_is_not_interface])
 
-        realizations_found = len(module_layer_objects)
-        if realizations_found > 1:
-            raise MultipleRealizationsException(str(f"{module:}\n\n",
-                                                    f"{interface:}\n\n",
-                                                    f"{module_layer_objects:}")
-                                                )
 
-        elif not realizations_found:
-            raise RealizationNotFount((f"{module:}\n",
-                                       f"{interface:}\n"))
+# TODO: подумать над созданием файла base.py
 
-        interface_realization = module_layer_objects[0]
-        return interface_realization
 
-    def get_all_interfaces(self, app_modules: AppModules):
-        """
-        Достаёт все интерфейсы слоя из перечисленных модулей
-        """
-        interfaces = []
-        for module in app_modules:
-            module_interfaces = self.get_module_interfaces(module=module)
-            interfaces.extend(module_interfaces)
-        return interfaces
-
-    def get_all_interfaces_and_realizations(self, app_modules
-                                            ) -> dict[InterfaceT, type]:
-        interfaces_to_realizations = {}
-        for module in app_modules:
-            interfaces = self.get_module_interfaces(module=module)
-            for interface in interfaces:
-                realization = self.get_interface_realization(
-                    module=module,
-                    interface=interface)
-                interfaces_to_realizations.update({interface: realization})
-
-        return interfaces_to_realizations
+class Layer(object, metaclass=LayerBase):
+    ...

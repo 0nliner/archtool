@@ -1,5 +1,5 @@
-from example_project.test_module_1.interfaces import TestRepo1Interface
-from example_project.test_module_2.interfaces import TestRepo2Interface
+from test_module_1.interfaces import TestRepo1Interface
+from test_module_2.interfaces import TestRepo2Interface
 
 
 class TestRepo1(TestRepo1Interface):
