@@ -30,7 +30,7 @@ make sdist
 Перетащите архив в папку с проектом и установите:
 
 ```
-pip install ./injector-0.1.0.tar.gz
+pip install ./injector-0.1.3.tar.gz
 ```
 
 Вы успешно установили библиотеку
