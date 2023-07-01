@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from injector.global_types import AppModules, DEPENDENCY_KEY
+from archtool.global_types import AppModules, DEPENDENCY_KEY
 
 
 class DependecyInjectorInterface(ABC):

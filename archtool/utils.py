@@ -7,10 +7,10 @@ from functools import singledispatch
 from re import sub
 
 from pathlib import Path
-from injector.exceptions import (CheckFailedException,
+from archtool.exceptions import (CheckFailedException,
                                  MultipleRealizationsException,
                                  RealizationNotFount)
-from injector.global_types import (
+from archtool.global_types import (
         Dependecy,
         ContainerT,
         DependeciesT,

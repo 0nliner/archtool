@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import List, Generator
 from inspect import isclass
 
-from injector.components.default_component import ComponentPatternBase
+from archtool.components.default_component import ComponentPatternBase
 
 
 class ValidationError(Exception):
@@ -79,6 +79,7 @@ class LayerBase(type):
 
         new_attrs = {"__module__": module,
                      "component_groups": components_instance,
+                     "Components": components_class,
                      "depends_on": depends_on}
 
         new_layer_class = super_new(cls, name, bases, new_attrs)

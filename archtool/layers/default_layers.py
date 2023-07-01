@@ -1,7 +1,7 @@
-from injector.components.default_component import ComponentPattern
-from injector.layers import Layer
+from archtool.components.default_component import ComponentPattern
+from archtool.layers import Layer
 
-from injector.layers.default_layer_interfaces import (ABCView,
+from archtool.layers.default_layer_interfaces import (ABCView,
                                                       ABCService,
                                                       ABCRepo,
                                                       ABCController)

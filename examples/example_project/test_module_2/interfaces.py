@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABCMeta
-from injector.layers.default_layer_interfaces import (ABCService,
+from archtool.layers.default_layer_interfaces import (ABCService,
                                                       ABCRepo)
 
 
