@@ -1,7 +1,7 @@
 Metadata-Version: 2.1
-Name: injector
-Version: 0.1.0
-Home-page: 'https://github.com/0nliner/injector'
+Name: archtool
+Version: 0.1.5
+Home-page: https://github.com/0nliner/archtool
 Author: Aleksandr Chudaikin
 Author-email: aleksandrchudaikindev@gmail.com
 License: MIT

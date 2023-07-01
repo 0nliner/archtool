@@ -4,17 +4,16 @@ from .exceptions import (DependecyDuplicate,
                          DependecyDoesNotRegistred
                          )
 
-from .interfaces import (DependecyInjectorInterface,
-                         LayerInterface
-                         )
+from .interfaces import DependecyInjectorInterface
 
-from injector.layers.default_layers import default_layers
-from injector.layers import Layer
-from injector.global_types import (AppModules,
+from archtool.layers.default_layers import default_layers
+from archtool.layers.di_basic_layer import Layer
+from archtool.components.default_component import ComponentPattern
+from archtool.global_types import (AppModules,
                                    ContainerT,
                                    DEPENDENCY_KEY)
 
-from injector.utils import (get_dependencies,
+from archtool.utils import (get_dependencies,
                             serialize_dep_key,
                             get_all_interfaces_and_realizations)
 
@@ -26,26 +25,33 @@ from injector.utils import (get_dependencies,
 class DependecyInjector(DependecyInjectorInterface):
     def __init__(self,
                  modules_list: AppModules,
-                 layers: List[LayerInterface] = None):
+                 layers: List[Layer] = None):
 
         self.modules_list = modules_list
-        self.layers = layers if layers else default_layers
         # инициализируем классы слоёв
         # TODO: позже нужно вынести инициализацию.
         #       Это должен делать пользователь
-        self.layers = [layer() for layer in self.layers]
         self._dependencies: Dict[DEPENDENCY_KEY, object] = {}
+
+        self.layers = layers if layers else default_layers
+        self._layers = []
+        for layer in self.layers:
+            initialized_layer = layer()
+            self._layers.append(initialized_layer)
+        self.layers = self._layers
 
     def inject(self):
         for layer in self.layers:
             if issubclass(type(layer), Layer):
-                # TODO: сделать аннотирование на components
-                # TODO: добавить __iter__ на Components класс
-                for component_group in layer.component_groups:
+                for component_pattern in layer.component_groups:
+                    # достаём модули, которые не игнорируют слой
+                    modules_to_interact = self._exclude_ignored_modules(
+                        component_pattern=component_pattern)
+
                     component_group_deps = get_all_interfaces_and_realizations(
-                        app_modules=self.modules_list,
-                        name_pattern=component_group.module_name_regex,
-                        superclass=component_group.superclass)
+                        app_modules=modules_to_interact,
+                        name_pattern=component_pattern.module_name_regex,
+                        superclass=component_pattern.superclass)
 
                     # добавляем зависимости слоя в глобальные зависимости
                     for dep_key, dep_class in component_group_deps.items():
@@ -57,6 +63,13 @@ class DependecyInjector(DependecyInjectorInterface):
         # инжектим
         for dep_interface, dep_instance in self._dependencies.items():
             self._inject_dependencies(container=dep_instance)
+
+    def _exclude_ignored_modules(self, component_pattern: ComponentPattern):
+        filtered_modules = []
+        for module in self.modules_list:
+            if component_pattern not in module.ignore:
+                filtered_modules.append(module)
+        return filtered_modules
 
     def _inject_dependencies(self, container: ContainerT) -> None:
         """

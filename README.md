@@ -2,7 +2,7 @@
 
 1. Добавить библиотеку в PYTHONPATH
 ```
-export PYTHONPATH="${PYTHONPATH}:путь до injector"
+export PYTHONPATH="${PYTHONPATH}:путь до archtool"
 ```
 2. Поставить зависимости
 ```
@@ -17,22 +17,10 @@ make sdist
 
 </br>
 </br>
-</br>
-</br>
 
-# Установка injector
-Пока injector лежит в приватной репе и отсутствует в pypi, так что ставим его ручками
-Актуальный релиз на момент коммита с README 0.1.3.
+# Установка
 </br>
-</br>
-[ссылка на скачивание injector](https://github.com/0nliner/injector/archive/refs/tags/0.1.3.tar.gz)
-</br></br>
-Перетащите архив в папку с проектом и установите:
 
 ```
-pip install ./injector-0.1.3.tar.gz
+pip install archtool
 ```
-
-Вы успешно установили библиотеку
-</br>
-</br>
