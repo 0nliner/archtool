@@ -36,12 +36,7 @@ class AppModule:
     """
     import_path: str
     # TODO: перенести логику игнора слоёв
-    ignore_views: bool = field(default=False)
-    ignore_service_interfaces: bool = field(default=False)
-    ignore_repositories_interfaces: bool = field(default=False)
-    ignore_repositories: bool = field(default=False)
-    ignore_services: bool = field(default=False)
-    is_legacy: bool = field(default=True)
+    ignore: List[Any] = field(default_factory=list)
 
     # TODO: написать отдельную функцию валидации модуля,
     # вынести её отдельно
