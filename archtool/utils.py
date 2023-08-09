@@ -43,7 +43,7 @@ def _(obj: object) -> str:
     # TODO: docs
     base_dir = Path(sys.path[0]).parent
     file_path = getfile(obj)
-    normailezed = file_path.replace(base_dir.as_posix(), "")
+    normailezed = file_path.replace(base_dir.absolute().as_posix(), "")
     normailezed = normailezed.replace("/", ".")[1:]
     normailezed = sub(r"\.py", "", normailezed)
     return normailezed
