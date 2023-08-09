@@ -2,7 +2,7 @@ from abc import ABCMeta
 import sys
 from inspect import isclass, isabstract, getfile, getmro
 from importlib import import_module
-from typing import List, Callable
+from typing import List, Callable, Dict
 from functools import singledispatch
 from re import sub
 
@@ -232,7 +232,7 @@ def get_all_interfaces(app_modules: AppModules):
 def get_all_interfaces_and_realizations(app_modules: AppModules,
                                         superclass,
                                         name_pattern: str
-                                        ) -> dict[InterfaceT, type]:
+                                        ) -> Dict[InterfaceT, type]:
     """
     Достаёт все интерфейсы и классы их реализующие
     """

@@ -2,7 +2,7 @@
 
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import List, Any
+from typing import List, Any, Union
 from re import Match
 from pathlib import Path
 import sys
@@ -25,7 +25,7 @@ class Dependecy:
 
 DependeciesT = List[Dependecy]
 
-DEPENDENCY_KEY = InterfaceT | str
+DEPENDENCY_KEY = Union[InterfaceT, str, object]
 
 
 @dataclass(repr=True)

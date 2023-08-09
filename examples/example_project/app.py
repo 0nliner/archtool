@@ -7,9 +7,10 @@ from archtool.dependecy_injector import DependecyInjector
 from archtool.layers.default_layers import DomainLayer
 from archtool.global_types import AppModule
 
+
+#   ignore=[DomainLayer.Components.services]),
 modules_list = [
-    AppModule("test_module_1",
-              ignore=[DomainLayer.Components.services]),
+    AppModule("test_module_1"),
     AppModule("test_module_2")
 ]
 
