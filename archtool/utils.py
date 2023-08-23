@@ -1,8 +1,9 @@
 from abc import ABCMeta
 import sys
-from inspect import isclass, isabstract, getfile, getmro
+from inspect import isclass, isabstract, getfile, getmro, getsource
 from importlib import import_module
 from typing import List, Callable, Dict
+import logging
 from functools import singledispatch
 from re import sub
 
@@ -96,16 +97,25 @@ def get_subclasses_from_module(module_path: str,
         module_absolute_path = resolve_import_path(app_module.import_path)
         imported_obj_absolute_path = resolve_import_path(obj)
         is_imported = imported_obj_absolute_path != module_absolute_path
-
+        logging.debug((f'\n{obj=}\n'
+                       f'{is_not_superclass=}\n'
+                       f'{module_absolute_path=}\n'
+                       f'{imported_obj_absolute_path=}\n'
+                       f'{is_imported=}'))
         try:
             if all([is_subclass, is_not_superclass, not is_imported]):
                 for check in addiction_checks:
+                    logging.debug('running_check:')
+                    logging.debug((f'source: \n{getsource(check)}'))
                     check_result = check(obj)
+                    logging.debug(f'{check_result=}')
                     if not check_result:
                         raise CheckFailedException(check)
                 objects.append(obj)
         except CheckFailedException:
             continue
+        finally:
+            logging.debug('\n'*3)
     return objects
 
 
@@ -205,14 +215,14 @@ def get_interface_realization(module: AppModule,
 
     realizations_found = len(module_layer_objects)
     if realizations_found > 1:
-        raise MultipleRealizationsException(str(f"{module:}\n\n",
-                                                f"{interface:}\n\n",
-                                                f"{module_layer_objects:}")
+        raise MultipleRealizationsException(str(f"{module=}\n\n",
+                                                f"{interface=}\n\n",
+                                                f"{module_layer_objects=}")
                                             )
 
     elif not realizations_found:
-        raise RealizationNotFount((f"{module:}\n",
-                                   f"{interface:}\n"))
+        raise RealizationNotFount((f"{module=}\n",
+                                   f"{interface=}\n"))
 
     interface_realization = module_layer_objects[0]
     return interface_realization

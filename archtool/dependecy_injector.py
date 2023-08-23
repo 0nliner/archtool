@@ -1,4 +1,5 @@
 from typing import List, Dict
+import logging
 
 from .exceptions import (DependecyDuplicate,
                          DependecyDoesNotRegistred
@@ -22,6 +23,12 @@ from archtool.utils import (get_dependencies,
 # TODO: валидации:
 #       однонаправленность импортов
 
+logging.basicConfig(
+    format='[archtool.DependencyInjector]\t%(levelname)s:%(message)s',
+    datefmt='%H:%M:%S',
+    level=logging.DEBUG)
+
+
 class DependecyInjector(DependecyInjectorInterface):
     def __init__(self,
                  modules_list: AppModules,
@@ -41,6 +48,10 @@ class DependecyInjector(DependecyInjectorInterface):
         self.layers = self._layers
 
     def inject(self):
+        logging.info('running injector...')
+        logging.info(f'{self.modules_list=}')
+        logging.info(f'{self.layers=}')
+
         for layer in self.layers:
             if issubclass(type(layer), Layer):
                 for component_pattern in layer.component_groups:
@@ -61,8 +72,11 @@ class DependecyInjector(DependecyInjectorInterface):
                                             value=dep_instance)
 
         # инжектим
+        line_sep = "\n\t"
+        logging.debug(f'dependencies:\n\t{line_sep.join(self._dependencies)}')
         for dep_interface, dep_instance in self._dependencies.items():
             self._inject_dependencies(container=dep_instance)
+        logging.info('injection ended')
 
     def _exclude_ignored_modules(self, component_pattern: ComponentPattern):
         filtered_modules = []
