@@ -95,7 +95,12 @@ def get_subclasses_from_module(module_path: str,
 
         is_not_superclass = obj is not superclass
         module_absolute_path = resolve_import_path(app_module.import_path)
-        imported_obj_absolute_path = resolve_import_path(obj)
+        try:
+            imported_obj_absolute_path = resolve_import_path(obj)
+        except TypeError:
+            # обработка объектов у которых мы не можем получить getfile
+            # пример: io.BytesIO
+            continue
         is_imported = imported_obj_absolute_path != module_absolute_path
         logging.debug((f'\n{obj=}\n'
                        f'{is_not_superclass=}\n'

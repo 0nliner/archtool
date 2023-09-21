@@ -96,7 +96,7 @@ class DependecyInjector(DependecyInjectorInterface):
         for dep in deps:
             # пытаемся найти зависимость
             try:
-                dependency_to_inject = self.get_dependency(key=dep.asked)
+                dependency_to_inject = self._get_dependency(key=dep.asked)
                 setattr(container, dep.name, dependency_to_inject)
             except KeyError:
                 raise DependecyDoesNotRegistred(("Данная зависимость не",
@@ -121,11 +121,20 @@ class DependecyInjector(DependecyInjectorInterface):
                                       f" {key} уже зарегистрирована"))
         self._dependencies[serialized_key] = value
 
-    def get_dependency(self,
-                       key: str) -> object:
+    def _get_dependency(self,
+                        key: str) -> object:
         try:
             instance = self._dependencies[key]
             return instance
         except KeyError:
-            raise DependecyDoesNotRegistred(
-                f'Зависимость не найдена {key:}')
+            serialized_deps =\
+                  "\n\t".join(f"{key}: {item}"
+                              for key, item in self._dependencies.items())
+            raise DependecyDoesNotRegistred((
+                f'Зависимость не найдена {key}\n'
+                f'Dependencies:\n{serialized_deps}'))
+
+    def get_dependency(self,
+                       key: str) -> object:
+        serialized_key = serialize_dep_key(key)
+        return self._get_dependency(serialized_key)
