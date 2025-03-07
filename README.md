@@ -1,133 +1,128 @@
-# DEV настройка среды
+# archtool D![Frame 3(2)](https://github.com/user-attachments/assets/df1e1811-1dc9-4c73-8115-632487401af9)
+ocumentation
 
-1. Добавить библиотеку в PYTHONPATH
-``` bash
-export PYTHONPATH="${PYTHONPATH}:путь до archtool"
-```
-2. Поставить зависимости
-``` bash
-python3.10 -m virtualenv venv
-source venv/bin/activate
-pip install -r dev_requirements.txt
-```
-3. Собрать пакет 
-``` bash
-make sdist
-```
+## 🛠 Development Environment Setup
 
-</br>
-</br>
+**Преимущества**:
+✅ **Dependency Injection** - управление зависимостями между компонентами  
+✅ **Контроль слоёв** - гарантия однонаправленных импортов  
+✅ **ISP Compliance** - принудительное разделение интерфейсов  
+✅ **Мультиархитектура** - поддержка Clean Architecture, ETL, микросервисов
+✅ Чёткое разделение между API эндпоинтами и бизнес-логикой
+✅ Автоматическая валидация зависимостей
+✅ Поддержка async/await
+✅ Интеграция с django и fast-api
 
-# Установка
-</br>
-
-```
+---
+## Установка
+```bash
 pip install archtool
 ```
 
+---
 
-</br></br>
-# Введение в библиотеку archtool
+## 🌐 Framework Integration
+### Django Support
+archtool помогает организовать Django-проекты в соответствии с Clean Architecture, упрощая:
+- Постепенный переход от монолитной структуры
+- Вынос бизнес-логики из views/forms
+- Интеграцию с современными решениями (FastAPI, AIOHTTP)
 
-
-### Фичи
-* Реализует паттерн Dependency Injection
-* Следит за тем, чтобы импорт в рамках слоёв был однонаправленным
-* Обязывает разработчиков соблюдать принцип сегрегации интерфейсов
-
-
-
-
-</br>
-
-### Примеры
-* Пример монолита
-* Пример микросервиса
-* Пример ETL приложения
-* Пример бота
-
-</br>
-
-### Что такое слой
-Разделение приложения на слои позволяет достичь более высокой степени модульности и улучшить его поддержку, расширяемость и добиться низкой связанности в коде. Каждый слой выполняет определенную функцию и имеет свои собственные интерфейсы, что упрощает работу над отдельными компонентами приложения и позволяет изменять их без влияния на другие части системы. 
-
-
-
-
-
-Библиотека предоставляет вам стандартные слои и интерфейсы в соответствии с чистой архитектурой Мартина Фаулера.
-
-
-
-```python
-
-class InfrastructureLayer(Layer):
-    """
-    Слой инфраструктуры
-    """
-    depends_on = None
-
-
-    class Components:
-        repos = ComponentPattern(module_name_regex="repos",
-                                 superclass=ABCRepo)
-
-
-class DomainLayer(Layer):
-    """
-    Слой бизнеслогики
-    """
-    depends_on = InfrastructureLayer
-
-
-    class Components:
-        services = ComponentPattern(module_name_regex="services",
-                                    superclass=ABCService)
-
-
-class ApplicationLayer(Layer):
-    """
-    Слой приложения
-    """
-    depends_on = DomainLayer
-
-
-    class Components:
-        controllers = ComponentPattern(module_name_regex="controllers",
-                                       superclass=ABCController)
-
-
-class PresentationLayer(Layer):
-    """
-    Слой отображения
-    """
-    depends_on = ApplicationLayer or DomainLayer
-
-
-    class Components:
-        views = ComponentPattern(module_name_regex="views",
-                                 superclass=ABCView)
-
+**Пример структуры**:
+```
+myproject/
+├── archtool_bundle/            # django app, отвечающий за совместимость с archtool 
+│   ├── interfaces.py
+│   ├── controllers.py
+│   ├── services.py
+│   └── repos.py
+├── app2/
+│   ├── interfaces.py
+│   ├── controllers.py
+│   ├── services.py
+│   └── repos.py
+├── entrypoints/                  # точки входа в приложение
+│   └── fastapi_app.py
 ```
 
-В данном случае определяются 4 слоя:
-
-* Infrastructure
-* Domain
-* Application (необязательный слой)
-* Presentation
+**Интеграция**:
+документация в активной разработке 
 
 
-Библиотека не ограничивает вас только чистой архитектурой, к примеру вы можете реализовать ETL архитектуру
+### FastAPI Integration
+Создавайте хорошо структурированные API с автоматическим DI:
+Документация в активной разработке
+
+---
+
+## 📚 Examples
+
+| Example Type       | Description                     |
+|--------------------|---------------------------------|
+| Django Migration   | `examples/django_migration/`   |
+| FastAPI Microservice| `examples/fastapi_service/`    |
+```
 
 
 
-#### Преимущества использования слоёв
+### Архитектурные слои
+```python
+# Clean Architecture (по Роберту Мартину)
+class InfrastructureLayer(Layer):
+    """Работа с БД, внешние API"""
+    depends_on = None
+    
+    class Components:
+        repos = ComponentPattern(
+            module_name_regex="repos",
+            superclass=ABCRepo
+        )
 
+class DomainLayer(Layer):
+    """Ядро системы: модели и бизнес-логика"""
+    depends_on = InfrastructureLayer
+    
+    class Components:
+        services = ComponentPattern(
+            module_name_regex="services",
+            superclass=ABCService
+        )
 
-* Уменьшает связанность между компонентами системы
-* Способствует повышению безопасности приложения, поскольку каждый слой может иметь свои собственные механизмы защиты.
-* Упрощает тестируемость, за счёт возможности изолированно тестировать логику.
-* Повышает читаемость и простоту написания кода, методы становятся меньше по объёму, т.к логика разделена.
-* Способствует соблюдению принципа DRY за счёт чёткой структуры приложения
+class ApplicationLayer(Layer):
+    """Оркестрация workflow"""
+    depends_on = DomainLayer
+    
+    class Components:
+        controllers = ComponentPattern(
+            module_name_regex="controllers",
+            superclass=ABCController
+        )
 
+class PresentationLayer(Layer):
+    """API и пользовательские интерфейсы"""
+    depends_on = ApplicationLayer
+    
+    class Components:
+        views = ComponentPattern(
+            module_name_regex="views",
+            superclass=ABCView
+        )
+```
+
+---
+
+### Преимущества подхода
+1. **Снижение связанности**  
+   Изоляция слоёв через strict import rules (DIP)
+
+2. **Тестируемость**  
+   Легкое мокирование через DI-контейнер
+
+3. **Гибкость архитектуры**  
+   Кастомные слои для любых сценариев
+
+4. **Валидация**  
+   Автоматическая проверка правил импортов
+
+5. **Документирование**  
+   Явная структура проекта = живая документация
