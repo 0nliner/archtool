@@ -1331,6 +1331,12 @@
 <td><code>None</code></td>
 <td>Включить отладочный вывод в stderr. Управляется также через переменную окружения <code>ARCHTOOL_VERBOSE=1</code>.</td>
 </tr>
+<tr>
+<td><code>enforce_layers</code></td>
+<td><code>bool</code></td>
+<td><code>True</code></td>
+<td>При <code>True</code> (по умолчанию) archtool проверяет нарушения границ слоёв между проходами 1 и 2. Установите <code>False</code>, чтобы пропустить проверку.</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Пример:</strong></p>
@@ -1358,10 +1364,16 @@
 <p><strong>Что происходит внутри:</strong></p>
 <ol>
 <li>
-<p><strong>Проход 1 — обнаружение и регистрация.</strong> Для каждого слоя и каждого <code>ComponentPattern</code> archtool сканирует <code>interfaces.py</code> на абстрактные подклассы маркера слоя (например <code>ABCRepo</code>), затем находит конкретную реализацию в соответствующем файле (например <code>repos.py</code>). Каждый конкретный класс инстанциируется как <code>Class()</code> и сохраняется в <code>dependencies</code>.</p>
+<p><strong>Проход 1 — обнаружение и регистрация.</strong> Для каждого слоя и каждого <code>ComponentPattern</code> archtool сканирует <code>interfaces.py</code> на абстрактные подклассы маркера слоя (например <code>ABCRepo</code>), затем находит конкретную реализацию в соответствующем файле (например <code>repos.py</code>). Каждый конкретный класс инстанциируется как <code>Class()</code> и сохраняется в <code>dependencies</code>. Бросает <code>InstantiationError</code>, если у класса нетривиальный <code>__init__</code>.</p>
 </li>
 <li>
-<p><strong>Проход 2 — инъекция.</strong> Для каждого зарегистрированного экземпляра archtool читает классовые <code>__annotations__</code> и вызывает <code>setattr(instance, attr_name, dependency_instance)</code> для каждой аннотированной зависимости.</p>
+<p><strong>Проверка слоёв</strong> (при <code>enforce_layers=True</code>). После прохода 1 archtool проверяет, что ни один компонент не зависит от компонента из более высокого слоя. При нарушении бросает <code>TopLevelLayerUsingException</code>. Проверка выполняется до инъекции — контейнер остаётся чистым при ошибке.</p>
+</li>
+<li>
+<p><strong>Топологическая сортировка и обнаружение циклов.</strong> До любого <code>setattr</code> archtool выполняет DFS-топологическую сортировку графа зависимостей для определения порядка инъекции. При обнаружении цикла немедленно бросает <code>CircularDependencyError</code> с полным путём цикла.</p>
+</li>
+<li>
+<p><strong>Проход 2 — инъекция.</strong> Компоненты обрабатываются в топологическом порядке (сначала самые глубокие зависимости). Для каждого экземпляра archtool читает классовые <code>__annotations__</code> и вызывает <code>setattr(instance, attr_name, dependency_instance)</code> для каждой аннотированной зависимости.</p>
 </li>
 </ol>
 <p>Ключи, предварительно зарегистрированные через <code>register()</code>, пропускаются в проходе 1 — используется предзарегистрированное значение.</p>

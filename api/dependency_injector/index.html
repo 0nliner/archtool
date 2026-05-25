@@ -1407,6 +1407,12 @@
 <td><code>None</code></td>
 <td>Enable debug logging to stderr. Also controlled by the <code>ARCHTOOL_VERBOSE=1</code> environment variable.</td>
 </tr>
+<tr>
+<td><code>enforce_layers</code></td>
+<td><code>bool</code></td>
+<td><code>True</code></td>
+<td>When <code>True</code> (default), archtool checks layer boundary violations between Pass 1 and Pass 2. Set to <code>False</code> to skip the check.</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Example:</strong></p>
@@ -1434,10 +1440,16 @@
 <p><strong>What happens internally:</strong></p>
 <ol>
 <li>
-<p><strong>Pass 1 — discovery and registration.</strong> For each layer and each <code>ComponentPattern</code>, archtool scans <code>interfaces.py</code> for abstract subclasses of the layer marker (e.g. <code>ABCRepo</code>), then finds the concrete implementation in the matching file (e.g. <code>repos.py</code>). Each concrete class is instantiated as <code>Class()</code> and stored in <code>dependencies</code>.</p>
+<p><strong>Pass 1 — discovery and registration.</strong> For each layer and each <code>ComponentPattern</code>, archtool scans <code>interfaces.py</code> for abstract subclasses of the layer marker (e.g. <code>ABCRepo</code>), then finds the concrete implementation in the matching file (e.g. <code>repos.py</code>). Each concrete class is instantiated as <code>Class()</code> and stored in <code>dependencies</code>. Raises <code>InstantiationError</code> if a class has a non-trivial <code>__init__</code>.</p>
 </li>
 <li>
-<p><strong>Pass 2 — injection.</strong> For every registered instance, archtool reads class-level <code>__annotations__</code> and calls <code>setattr(instance, attr_name, dependency_instance)</code> for each annotated dependency.</p>
+<p><strong>Layer enforcement</strong> (when <code>enforce_layers=True</code>). After Pass 1, archtool checks that no component depends on a component from a higher layer. Raises <code>TopLevelLayerUsingException</code> if a boundary is violated. This check runs before any injection, so the container is still clean on failure.</p>
+</li>
+<li>
+<p><strong>Topological sort + cycle detection.</strong> Before any <code>setattr</code> is called, archtool performs a DFS-based topological sort of the dependency graph to determine injection order. If a cycle is detected, raises <code>CircularDependencyError</code> immediately with the full cycle path.</p>
+</li>
+<li>
+<p><strong>Pass 2 — injection.</strong> Components are processed in topological order (deepest dependencies first). For each instance archtool reads class-level <code>__annotations__</code> and calls <code>setattr(instance, attr_name, dependency_instance)</code> for each annotated dependency.</p>
 </li>
 </ol>
 <p>Manually pre-registered keys (via <code>register()</code>) are skipped in pass 1 — their pre-registered value is used as-is.</p>

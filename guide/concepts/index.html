@@ -1347,27 +1347,33 @@
    <code>"myproject.app.users.interfaces.UserRepoABC" → UserRepo()</code></li>
 </ol>
 <p>Then <code>DomainLayer</code> repeats the same for <code>ABCService</code> / <code>services.py</code>.</p>
+<p><strong>Between passes — topological sort and cycle detection:</strong></p>
+<p>Before any <code>setattr</code> is called, archtool sorts registered components so that each dependency is always wired before the component that uses it. This is a DFS-based topological sort over the dependency graph.</p>
+<p>If the graph contains a cycle (<code>ServiceA</code> needs <code>ServiceB</code> needs <code>ServiceA</code>), archtool raises <code>CircularDependencyError</code> immediately — before touching any object — with the full cycle path in the message:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>CircularDependencyError: Circular dependency detected:
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>ServiceA → ServiceB → ServiceA
+</code></pre></div>
 <p><strong>Pass 2 — inject:</strong></p>
-<p>For every registered instance, archtool reads its class-level annotations. For <code>UserService</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>vars(UserService).__annotations__ == {&quot;repo&quot;: UserRepoABC}
+<p>Components are processed in topological order (deepest dependencies first). For each instance archtool reads its class-level annotations. For <code>UserService</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>vars(UserService).__annotations__ == {&quot;repo&quot;: UserRepoABC}
 </code></pre></div>
 <p>archtool looks up <code>"myproject.app.users.interfaces.UserRepoABC"</code> in the registry, finds the <code>UserRepo</code> instance, and calls:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">setattr</span><span class="p">(</span><span class="n">user_service_instance</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">,</span> <span class="n">user_repo_instance</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">setattr</span><span class="p">(</span><span class="n">user_service_instance</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">,</span> <span class="n">user_repo_instance</span><span class="p">)</span>
 </code></pre></div>
 <p>The result: <code>user_service.repo</code> is the fully wired <code>UserRepo</code>, with no boilerplate in your code.</p>
 <h3 id="wiring-the-whole-thing">Wiring the whole thing</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">archtool.dependency_injector</span><span class="w"> </span><span class="kn">import</span> <span class="n">DependencyInjector</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">archtool.global_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppModule</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">injector</span> <span class="o">=</span> <span class="n">DependencyInjector</span><span class="p">(</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">modules_list</span><span class="o">=</span><span class="p">[</span><span class="n">AppModule</span><span class="p">(</span><span class="s2">&quot;app.users&quot;</span><span class="p">)],</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">project_root</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="p">)</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">()</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="n">service</span> <span class="o">=</span> <span class="n">injector</span><span class="o">.</span><span class="n">get_dependency</span><span class="p">(</span><span class="n">UserServiceABC</span><span class="p">)</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">service</span><span class="o">.</span><span class="n">get_name</span><span class="p">())</span>   <span class="c1"># &quot;alice&quot; — repo was injected automatically</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">archtool.dependency_injector</span><span class="w"> </span><span class="kn">import</span> <span class="n">DependencyInjector</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">archtool.global_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppModule</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">injector</span> <span class="o">=</span> <span class="n">DependencyInjector</span><span class="p">(</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">modules_list</span><span class="o">=</span><span class="p">[</span><span class="n">AppModule</span><span class="p">(</span><span class="s2">&quot;app.users&quot;</span><span class="p">)],</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">project_root</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="p">)</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">()</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="n">service</span> <span class="o">=</span> <span class="n">injector</span><span class="o">.</span><span class="n">get_dependency</span><span class="p">(</span><span class="n">UserServiceABC</span><span class="p">)</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">service</span><span class="o">.</span><span class="n">get_name</span><span class="p">())</span>   <span class="c1"># &quot;alice&quot; — repo was injected automatically</span>
 </code></pre></div>
 <hr />
 <h2 id="layered-architecture">Layered architecture</h2>
@@ -1407,17 +1413,17 @@
 <p>The rule: <strong>inner layers must not import from outer layers</strong>. Domain (services) should not import infrastructure (repos) directly — they communicate only through the declared interface. archtool enforces this at startup if you pass <code>layers=[...]</code> to the injector.</p>
 <h3 id="bounded-contexts">Bounded contexts</h3>
 <p>Each <code>AppModule</code> is one <strong>bounded context</strong> — a vertical slice of the domain with its own interfaces, services, and repos:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>app/
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>├── users/      ← AppModule(&quot;app.users&quot;)
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>├── orders/     ← AppModule(&quot;app.orders&quot;)
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>└── payments/   ← AppModule(&quot;app.payments&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>app/
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>├── users/      ← AppModule(&quot;app.users&quot;)
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>├── orders/     ← AppModule(&quot;app.orders&quot;)
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>└── payments/   ← AppModule(&quot;app.payments&quot;)
 </code></pre></div>
 <p>A service in <code>orders</code> can declare a dependency on an interface from <code>users</code> — archtool resolves it across module boundaries by key.</p>
 <hr />
 <h2 id="the-assembly-test-pattern">The assembly test pattern</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_di_assembles</span><span class="p">():</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">injector</span> <span class="o">=</span> <span class="n">DependencyInjector</span><span class="p">(</span><span class="n">modules_list</span><span class="o">=</span><span class="n">APPS</span><span class="p">,</span> <span class="n">project_root</span><span class="o">=</span><span class="n">ROOT</span><span class="p">)</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">()</span>   <span class="c1"># raises on any wiring error</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_di_assembles</span><span class="p">():</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="n">injector</span> <span class="o">=</span> <span class="n">DependencyInjector</span><span class="p">(</span><span class="n">modules_list</span><span class="o">=</span><span class="n">APPS</span><span class="p">,</span> <span class="n">project_root</span><span class="o">=</span><span class="n">ROOT</span><span class="p">)</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">()</span>   <span class="c1"># raises on any wiring error</span>
 </code></pre></div>
 <p>One fast test that catches: missing concrete class, wrong inheritance, <code>from __future__ import annotations</code> breaking type resolution, broken imports — before they reach production.</p>
 

@@ -1108,6 +1108,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#circulardependencyerror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CircularDependencyError
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instantiationerror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InstantiationError
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#annotationsnotresolvableerror" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1306,14 +1328,16 @@
 <p>Все исключения archtool наследуются от <code>ArchToolError</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">archtool.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">ArchToolError</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">DependencyDuplicate</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">DependencyDoesNotRegistred</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">TopLevelLayerUsingException</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">MultipleRealizationsException</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">RealizationNotFound</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">ModuleValidationError</span><span class="p">,</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">AnnotationsNotResolvableError</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">CircularDependencyError</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">DependencyDuplicate</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">DependencyDoesNotRegistred</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">InstantiationError</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">TopLevelLayerUsingException</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">MultipleRealizationsException</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">RealizationNotFound</span><span class="p">,</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">ModuleValidationError</span><span class="p">,</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">AnnotationsNotResolvableError</span><span class="p">,</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">)</span>
 </code></pre></div>
 <hr />
 <h2 id="_2">Справочник</h2>
@@ -1355,6 +1379,29 @@
 <hr />
 <h3 id="modulevalidationerror"><code>ModuleValidationError</code></h3>
 <p>Выбрасывается командой CLI <code>archtool validate</code>, когда <code>AppModule</code> не проходит структурные проверки (например, отсутствует <code>interfaces.py</code>).</p>
+<hr />
+<h3 id="circulardependencyerror"><code>CircularDependencyError</code></h3>
+<p>Выбрасывается во время <code>inject()</code>, когда граф зависимостей содержит цикл. archtool выполняет топологическую сортировку (DFS) перед проходом 2. При обнаружении обратного ребра сортировка немедленно прерывается — <strong>до любого вызова <code>setattr</code></strong> — контейнер остаётся в чистом состоянии.</p>
+<p>Сообщение исключения содержит полный путь цикла с короткими именами классов и полными сериализованными ключами:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>CircularDependencyError: Circular dependency detected:
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>OrderService → PaymentService → OrderService
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Full keys: [&#39;myproject.app.orders.interfaces.OrderServiceABC&#39;,
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>            &#39;myproject.app.payments.interfaces.PaymentServiceABC&#39;,
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>            &#39;myproject.app.orders.interfaces.OrderServiceABC&#39;]
+</code></pre></div>
+<p><strong>Решение:</strong> разорвать цикл через общий интерфейс, от которого зависит одна из сторон, или предварительно зарегистрировать один из компонентов через <code>injector.register()</code> до <code>inject()</code>.</p>
+<hr />
+<h3 id="instantiationerror"><code>InstantiationError</code></h3>
+<p>Выбрасывается, когда archtool не может вызвать <code>impl_class()</code> без аргументов в проходе 1.</p>
+<p>archtool всегда инстанциирует конкретные классы как <code>Class()</code>. Если конструктор требует позиционные аргументы — вызов упадёт с <code>TypeError</code>, который перебрасывается как <code>InstantiationError</code> с понятным сообщением:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>InstantiationError: Cannot instantiate &#39;UserRepo&#39;: __init__() missing 1
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>required positional argument: &#39;db_url&#39;
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>archtool requires a no-argument __init__. Use injector.register(InterfaceABC,
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>your_instance) before inject() to provide instances that need constructor arguments.
+</code></pre></div>
+<p><strong>Решение:</strong> предварительно зарегистрировать экземпляр через <code>register()</code> до вызова <code>inject()</code>.</p>
 <hr />
 <h3 id="annotationsnotresolvableerror"><code>AnnotationsNotResolvableError</code></h3>
 <p>Выбрасывается, когда аннотации класса не удаётся разрешить — чаще всего при использовании <code>from __future__ import annotations</code> с forward-ссылкой, которой не существует во время сборки DI.</p>

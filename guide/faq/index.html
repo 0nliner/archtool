@@ -902,6 +902,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-happens-if-theres-a-circular-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens if there's a circular dependency?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#my-class-has-constructor-arguments-archtool-cant-instantiate-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        My class has constructor arguments — archtool can't instantiate it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-do-i-see-what-was-injected" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1324,21 +1346,38 @@
 <h2 id="can-i-have-more-than-one-implementation-of-an-interface">Can I have more than one implementation of an interface?</h2>
 <p>No — archtool enforces <strong>one implementation per interface per module</strong>. If two concrete classes both inherit from the same ABC in the same module, <code>MultipleRealizationsException</code> is raised at assembly time. This is by design: the whole point is unambiguous wiring.</p>
 <hr />
+<h2 id="what-happens-if-theres-a-circular-dependency">What happens if there's a circular dependency?</h2>
+<p>archtool detects cycles <strong>before</strong> Pass 2 starts, via a DFS topological sort. If <code>ServiceA</code> depends on <code>ServiceB</code> and <code>ServiceB</code> depends on <code>ServiceA</code>, you get:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>CircularDependencyError: Circular dependency detected:
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>ServiceA → ServiceB → ServiceA
+</code></pre></div>
+<p>No <code>setattr</code> has been called yet, so the container is clean. To break the cycle: either introduce a shared interface that one side depends on, or pre-register one of the instances via <code>injector.register()</code> before calling <code>inject()</code>.</p>
+<hr />
+<h2 id="my-class-has-constructor-arguments-archtool-cant-instantiate-it">My class has constructor arguments — archtool can't instantiate it</h2>
+<p>archtool calls <code>Class()</code> with no arguments. If your class needs them, pre-register the fully constructed instance:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">repo</span> <span class="o">=</span> <span class="n">UserRepo</span><span class="p">(</span><span class="n">db_url</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;DATABASE_URL&quot;</span><span class="p">])</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">injector</span> <span class="o">=</span> <span class="n">DependencyInjector</span><span class="p">(</span><span class="n">modules_list</span><span class="o">=</span><span class="n">APPS</span><span class="p">,</span> <span class="n">project_root</span><span class="o">=</span><span class="n">ROOT</span><span class="p">)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">injector</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">UserRepoABC</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">repo</span><span class="p">)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">()</span>  <span class="c1"># skips auto-discovery for UserRepoABC, uses your instance</span>
+</code></pre></div>
+<p>Without <code>register()</code>, archtool raises <code>InstantiationError</code> with a message that points you to this exact fix.</p>
+<hr />
 <h2 id="how-do-i-see-what-was-injected">How do I see what was injected?</h2>
-<p>After calling <code>inject()</code>, inspect <code>injector._dependencies</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">()</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">injector</span><span class="o">.</span><span class="n">_dependencies</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">&quot;→&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+<p>After calling <code>inject()</code>, inspect <code>injector.dependencies</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">()</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">injector</span><span class="o">.</span><span class="n">dependencies</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">&quot;→&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
 </code></pre></div>
 <p>Or use the CLI:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>archtool<span class="w"> </span>graph
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>archtool<span class="w"> </span>graph
 </code></pre></div>
 <hr />
 <h2 id="how-do-i-enable-debug-logging">How do I enable debug logging?</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">ARCHTOOL_VERBOSE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>entrypoints/run.py
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nv">ARCHTOOL_VERBOSE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>entrypoints/run.py
 </code></pre></div>
 <p>Or:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">DependencyInjector</span><span class="p">(</span><span class="n">modules_list</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">DependencyInjector</span><span class="p">(</span><span class="n">modules_list</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 <p>archtool never calls <code>logging.basicConfig()</code> — it only adds a <code>StreamHandler</code> when verbose mode is explicitly requested, so it never floods your application's log output.</p>
 <hr />

@@ -929,7 +929,7 @@
   <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Как посмотреть что было внедрено?
+        Что будет, если есть циклическая зависимость?
       
     </span>
   </a>
@@ -938,6 +938,17 @@
       
         <li class="md-nav__item">
   <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Как посмотреть что было внедрено?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
     <span class="md-ellipsis">
       
         Как включить логи сборки?
@@ -1337,47 +1348,60 @@
 </code></pre></div>
 <hr />
 <h2 id="__init__">Нужен ли <code>__init__</code> с параметрами?</h2>
-<p>Нет. archtool вызывает <code>ConcreteClass()</code> без аргументов. Если у конкретного класса есть required параметры в конструкторе — сборка упадёт с <code>TypeError</code>.</p>
-<p>Если тебе нужно проинициализировать объект с параметрами (например, строкой подключения к базе), установи их отдельно после <code>inject()</code>, или используй переменные окружения/конфиг, которые класс читает сам при инициализации.</p>
+<p>Нет. archtool вызывает <code>ConcreteClass()</code> без аргументов. Если у конкретного класса есть обязательные параметры конструктора, предварительно зарегистрируй готовый экземпляр:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">repo</span> <span class="o">=</span> <span class="n">UserRepo</span><span class="p">(</span><span class="n">db_url</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;DATABASE_URL&quot;</span><span class="p">])</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">injector</span> <span class="o">=</span> <span class="n">DependencyInjector</span><span class="p">(</span><span class="n">modules_list</span><span class="o">=</span><span class="n">APPS</span><span class="p">,</span> <span class="n">project_root</span><span class="o">=</span><span class="n">ROOT</span><span class="p">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">injector</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">UserRepoABC</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">repo</span><span class="p">)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">()</span>  <span class="c1"># пропускает авто-обнаружение UserRepoABC, использует твой экземпляр</span>
+</code></pre></div>
+<p>Без <code>register()</code> archtool бросит <code>InstantiationError</code> с сообщением, которое укажет именно на этот фикс.</p>
 <hr />
 <h2 id="archtool-">Как зарегистрировать то, что archtool не может авто-обнаружить?</h2>
 <p>Используй <code>injector.register()</code> до вызова <code>inject()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># async-ресурс, сторонний объект или что угодно другое</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">pool</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncpg</span><span class="o">.</span><span class="n">create_pool</span><span class="p">(</span><span class="n">DATABASE_URL</span><span class="p">)</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">injector</span> <span class="o">=</span> <span class="n">DependencyInjector</span><span class="p">(</span><span class="n">modules_list</span><span class="o">=</span><span class="n">APPS</span><span class="p">,</span> <span class="n">project_root</span><span class="o">=</span><span class="n">ROOT</span><span class="p">)</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">injector</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">DBPoolABC</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">pool</span><span class="p">)</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">()</span>   <span class="c1"># авто-обнаруживает остальное; пул уже зарегистрирован</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># async-ресурс, сторонний объект или что угодно другое</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">pool</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncpg</span><span class="o">.</span><span class="n">create_pool</span><span class="p">(</span><span class="n">DATABASE_URL</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">injector</span> <span class="o">=</span> <span class="n">DependencyInjector</span><span class="p">(</span><span class="n">modules_list</span><span class="o">=</span><span class="n">APPS</span><span class="p">,</span> <span class="n">project_root</span><span class="o">=</span><span class="n">ROOT</span><span class="p">)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">injector</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">DBPoolABC</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">pool</span><span class="p">)</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">()</span>   <span class="c1"># авто-обнаруживает остальное; пул уже зарегистрирован</span>
 </code></pre></div>
 <p>archtool уважает предзарегистрированные зависимости и пропускает авто-обнаружение для них. После <code>inject()</code> пул внедряется в любой компонент, объявивший <code>pool: DBPoolABC</code>.</p>
 <p>Словарь <code>injector.dependencies</code> тоже доступен напрямую — это обычный dict с ключами в виде полного dotted-пути до класса интерфейса.</p>
 <hr />
 <h2 id="_2">Как условно подменить реализацию (например, в тестах)?</h2>
 <p>Предзарегистрируй альтернативу до <code>inject()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># в тестах: меняем реальный репо на заглушку</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">injector</span> <span class="o">=</span> <span class="n">DependencyInjector</span><span class="p">(</span><span class="n">modules_list</span><span class="o">=</span><span class="n">APPS</span><span class="p">,</span> <span class="n">project_root</span><span class="o">=</span><span class="n">ROOT</span><span class="p">)</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">injector</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">UserRepoABC</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">StubUserRepo</span><span class="p">())</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">()</span>   <span class="c1"># находит заглушку уже зарегистрированной, пропускает UserRepo</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># в тестах: меняем реальный репо на заглушку</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">injector</span> <span class="o">=</span> <span class="n">DependencyInjector</span><span class="p">(</span><span class="n">modules_list</span><span class="o">=</span><span class="n">APPS</span><span class="p">,</span> <span class="n">project_root</span><span class="o">=</span><span class="n">ROOT</span><span class="p">)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">injector</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">UserRepoABC</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">StubUserRepo</span><span class="p">())</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">()</span>   <span class="c1"># находит заглушку уже зарегистрированной, пропускает UserRepo</span>
 </code></pre></div>
 <hr />
 <h2 id="_3">Можно иметь несколько реализаций одного интерфейса?</h2>
 <p>Нет — archtool требует <strong>одну реализацию на интерфейс на модуль</strong>. Если два конкретных класса наследуют один ABC в одном модуле, при сборке бросается <code>MultipleRealizationsException</code>.</p>
 <hr />
-<h2 id="_4">Как посмотреть что было внедрено?</h2>
-<p>После <code>inject()</code> проверь <code>injector._dependencies</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">()</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">injector</span><span class="o">.</span><span class="n">_dependencies</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">&quot;→&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+<h2 id="_4">Что будет, если есть циклическая зависимость?</h2>
+<p>archtool обнаруживает циклы <strong>до</strong> начала прохода 2 через DFS-топологическую сортировку. Если <code>ServiceA</code> зависит от <code>ServiceB</code>, а <code>ServiceB</code> — от <code>ServiceA</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>CircularDependencyError: Circular dependency detected:
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>ServiceA → ServiceB → ServiceA
+</code></pre></div>
+<p>Ни одного <code>setattr</code> ещё не вызвано — контейнер остаётся чистым. Чтобы разорвать цикл: введи общий интерфейс, от которого зависит одна из сторон, или предзарегистрируй один из экземпляров через <code>injector.register()</code> до <code>inject()</code>.</p>
+<hr />
+<h2 id="_5">Как посмотреть что было внедрено?</h2>
+<p>После <code>inject()</code> проверь <code>injector.dependencies</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">()</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">injector</span><span class="o">.</span><span class="n">dependencies</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">&quot;→&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
 </code></pre></div>
 <p>Или через CLI:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>archtool<span class="w"> </span>graph
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>archtool<span class="w"> </span>graph
 </code></pre></div>
 <hr />
-<h2 id="_5">Как включить логи сборки?</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">ARCHTOOL_VERBOSE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>entrypoints/run.py
+<h2 id="_6">Как включить логи сборки?</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nv">ARCHTOOL_VERBOSE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>entrypoints/run.py
 </code></pre></div>
 <p>Или:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">DependencyInjector</span><span class="p">(</span><span class="n">modules_list</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">DependencyInjector</span><span class="p">(</span><span class="n">modules_list</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 <p>archtool никогда не вызывает <code>logging.basicConfig()</code> — добавляет <code>StreamHandler</code> только когда verbose-режим явно запрошен.</p>
 <hr />
