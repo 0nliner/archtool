@@ -1190,6 +1190,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#archtool.exceptions.CircularDependencyError" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CircularDependencyError
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#archtool.exceptions.DependencyDoesNotRegistred" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1205,6 +1216,17 @@
     <span class="md-ellipsis">
       
         DependencyDuplicate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#archtool.exceptions.InstantiationError" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InstantiationError
       
     </span>
   </a>
@@ -1647,6 +1669,56 @@ forward reference that cannot be resolved at DI assembly time.</p>
 
 
 
+<h4 id="archtool.exceptions.CircularDependencyError" class="doc doc-heading">
+            <code>CircularDependencyError</code>
+
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ArchToolError (archtool.exceptions.ArchToolError)" href="#archtool.exceptions.ArchToolError">ArchToolError</a></code></p>
+
+
+
+        <p>A circular dependency was detected during DI assembly.</p>
+<p>archtool performs a topological sort before Pass 2 injection. If the
+dependency graph contains a cycle, assembly is aborted immediately.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
 <h4 id="archtool.exceptions.DependencyDoesNotRegistred" class="doc doc-heading">
             <code>DependencyDoesNotRegistred</code>
 
@@ -1713,6 +1785,57 @@ and that a concrete implementation exists in the corresponding layer file.</p>
         <p>An interface has been registered more than once in the DI container.</p>
 <p>This usually means two modules both define a concrete class that
 implements the same interface.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="archtool.exceptions.InstantiationError" class="doc doc-heading">
+            <code>InstantiationError</code>
+
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ArchToolError (archtool.exceptions.ArchToolError)" href="#archtool.exceptions.ArchToolError">ArchToolError</a></code></p>
+
+
+
+        <p>A concrete implementation could not be instantiated with no arguments.</p>
+<p>archtool calls <code>impl_class()</code> during Pass 1. If the constructor requires
+arguments, pre-register the instance via <code>injector.register()</code> before
+calling <code>inject()</code>.</p>
 
 
 
