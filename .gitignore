@@ -1,8 +1,14 @@
 /venv/
+/.venv/
 .idea*
 *.pyc
+/__pycache__/
 /.pytest_cache/
 *.log
 test_data.txt
 /static/
-dist/
+/dist/
+/site/
+/updates/
+CLAUDE.md
+*.egg-info/

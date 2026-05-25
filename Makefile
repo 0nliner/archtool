@@ -1,14 +1,38 @@
-all: sdist bdist_wheel
+.PHONY: install install-dev test lint typecheck fmt build docs docs-serve clean
 
-sdist:
-	python setup.py sdist
+install:
+	pip install -e .
 
-bdist_wheel:
-	python setup.py bdist_wheel
+install-dev:
+	pip install -e ".[dev]"
 
-upload_build:
-	@read -p "Enter user token\n" token; \
-	echo $$token; \
-	python -m twine upload --repository pypi dist/* -u __token__ -p $$token --verbose
+test:
+	pytest --tb=short -q
 
-.PHONY : sdist bdist_wheel
+test-cov:
+	pytest --cov=archtool --cov-report=term-missing -q
+
+lint:
+	ruff check archtool tests
+
+fmt:
+	ruff format archtool tests
+
+typecheck:
+	mypy archtool --ignore-missing-imports
+
+build:
+	pip install build
+	python -m build
+
+docs:
+	pip install -e ".[docs]"
+	mkdocs gh-deploy --force
+
+docs-serve:
+	pip install -e ".[docs]"
+	mkdocs serve
+
+clean:
+	rm -rf dist/ build/ *.egg-info .coverage htmlcov/ .mypy_cache/ .ruff_cache/
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

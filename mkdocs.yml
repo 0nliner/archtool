@@ -1,0 +1,138 @@
+site_name: archtool
+site_description: Stop wiring dependencies by hand. archtool scans your modules, enforces clean architecture, and lets you write pure SOLID Python.
+site_url: https://0nliner.github.io/archtool
+repo_url: https://github.com/0nliner/archtool
+repo_name: 0nliner/archtool
+
+theme:
+  name: material
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+  palette:
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.annotate
+    - content.code.copy
+    - toc.integrate
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - assets/playground.js
+
+plugins:
+  - search:
+      lang:
+        - en
+        - ru
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: true
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: ru
+          name: Русский
+          build: true
+          nav_translations:
+            Home: Главная
+            Why archtool?: Зачем archtool?
+            Guide: Руководство
+            Installation: Установка
+            Quickstart: Быстрый старт
+            How it works: Как это работает
+            Module Structure: Структура модулей
+            Built-in Layers: Встроенные слои
+            Custom Layers: Кастомные слои
+            Manual Registration: Ручная регистрация
+            Interface-first Design: Проектирование от интерфейсов
+            CLI: CLI
+            FAQ: FAQ
+            Comparison: Сравнение с альтернативами
+            API Reference: Справочник API
+            Examples: Примеры
+            Basic project: Базовый проект
+            Nested modules: Вложенные модули
+            FastAPI + web_fractal: FastAPI + web_fractal
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            show_category_heading: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+  - tables
+
+nav:
+  - Home: index.md
+  - Why archtool?: why.md
+  - Guide:
+      - Installation: guide/installation.md
+      - Quickstart: guide/quickstart.md
+      - How it works: guide/concepts.md
+      - Interface-first Design: guide/interface_first.md
+      - Module Structure: guide/modules.md
+      - Built-in Layers: guide/layers.md
+      - Custom Layers: guide/custom_layers.md
+      - Manual Registration: guide/manual_registration.md
+      - CLI: guide/cli.md
+      - FAQ: guide/faq.md
+  - Comparison: guide/comparison.md
+  - API Reference:
+      - DependencyInjector: api/dependency_injector.md
+      - AppModule: api/app_module.md
+      - Exceptions: api/exceptions.md
+  - Examples:
+      - Basic project: examples/basic.md
+      - Nested modules: examples/nested.md
+      - FastAPI + web_fractal: examples/web_fractal.md
+
+copyright: >
+  © 2025 <a href="https://github.com/0nliner" target="_blank">Бюро автоматизации процессов</a>
+  &nbsp;·&nbsp;
+  <a href="mailto:aleksandrchudaikindev@gmail.com">aleksandrchudaikindev@gmail.com</a>
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/0nliner/archtool
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/archtool
+  sponsor:
+    url: https://github.com/sponsors/0nliner
+    title: Sponsor archtool

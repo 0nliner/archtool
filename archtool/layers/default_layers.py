@@ -56,14 +56,18 @@ class PresentationLayer(Layer):
     """
     Слой отображения
     """
-    depends_on = ApplicationLayer or DomainLayer
+    depends_on = ApplicationLayer
 
     class Components:
         views = ComponentPattern(module_name_regex="views",
                                  superclass=ABCView)
 
 
-default_layers = frozenset([PresentationLayer,
-                           ApplicationLayer,
-                           DomainLayer,
-                           InfrastructureLayer])
+# Ordered from outermost to innermost so inject() processes them top-down.
+# Must be a list (not frozenset) to guarantee stable iteration order.
+default_layers = [
+    PresentationLayer,
+    ApplicationLayer,
+    DomainLayer,
+    InfrastructureLayer,
+]

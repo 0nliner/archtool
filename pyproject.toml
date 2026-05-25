@@ -1,3 +1,90 @@
 [build-system]
-requires = ['setuptools>=42']
-build-backend = 'setuptools.build_meta'
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "archtool"
+version = "2.0.0"
+description = "Dependency injection and layered architecture enforcement for Python projects"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Aleksandr Chudaikin", email = "aleksandrchudaikindev@gmail.com" }]
+keywords = ["dependency-injection", "clean-architecture", "di", "architecture"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Typing :: Typed",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.0",
+    "rich>=13.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/0nliner/archtool"
+Documentation = "https://0nliner.github.io/archtool"
+Repository = "https://github.com/0nliner/archtool"
+"Bug Tracker" = "https://github.com/0nliner/archtool/issues"
+
+[project.scripts]
+archtool = "archtool.cli.main:cli"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "mypy>=1.10",
+    "ruff>=0.4",
+]
+docs = [
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.25",
+    "mkdocs-static-i18n>=1.2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["archtool"]
+
+# ── ruff ──────────────────────────────────────────────────────────────────────
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "T20"]
+ignore = ["E501"]
+
+# ── mypy ──────────────────────────────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.10"
+strict = false
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_ignores = true
+
+# ── pytest ────────────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+norecursedirs = [".git", ".venv", "build", "dist", "__pycache__", "*.egg-info"]
+addopts = "-q --tb=short"
+pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["archtool"]
+omit = ["archtool/cli/templates/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
