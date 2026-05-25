@@ -70,16 +70,19 @@ archtool walks every layer's `ComponentPattern`. For example, `InfrastructureLay
 
 Then `DomainLayer` repeats the same for `ABCService` / `services.py`.
 
-**Between passes — topological sort and cycle detection:**
+**Between passes — topological sort:**
 
 Before any `setattr` is called, archtool sorts registered components so that each dependency is always wired before the component that uses it. This is a DFS-based topological sort over the dependency graph.
 
-If the graph contains a cycle (`ServiceA` needs `ServiceB` needs `ServiceA`), archtool raises `CircularDependencyError` immediately — before touching any object — with the full cycle path in the message:
+If the graph contains a cycle (`ServiceA` depends on `ServiceB`, `ServiceB` depends on `ServiceA`), archtool **does not fail** — in the two-pass scheme all objects are already instantiated, so circular `setattr` calls are perfectly valid. Instead, a `WARNING` is logged once per `inject()` call:
 
 ```
-CircularDependencyError: Circular dependency detected:
-ServiceA → ServiceB → ServiceA
+[archtool] WARNING Circular dependency detected: ServiceA → ServiceB → ServiceA.
+Wiring will succeed because all objects are already instantiated, but mutual
+method recursion may cause infinite loops at runtime.
 ```
+
+This is a design signal, not an error. Circular wiring often indicates that two components share too many responsibilities and could be split.
 
 **Pass 2 — inject:**
 

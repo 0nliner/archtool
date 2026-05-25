@@ -70,16 +70,19 @@ archtool обходит `ComponentPattern` каждого слоя. Наприм
 
 Затем `DomainLayer` делает то же самое для `ABCService` / `services.py`.
 
-**Между проходами — топологическая сортировка и обнаружение циклов:**
+**Между проходами — топологическая сортировка:**
 
 До того как вызвать хоть один `setattr`, archtool сортирует зарегистрированные компоненты так, чтобы каждая зависимость всегда проводилась раньше компонента, который её использует. Это DFS-based топологическая сортировка по графу зависимостей.
 
-Если граф содержит цикл (`ServiceA` нужен `ServiceB`, а `ServiceB` нужен `ServiceA`), archtool немедленно бросает `CircularDependencyError` — до того как тронуть какой-либо объект — с полным путём цикла в сообщении:
+Если граф содержит цикл (`ServiceA` зависит от `ServiceB`, `ServiceB` зависит от `ServiceA`), archtool **не падает** — в двухпроходной схеме все объекты уже созданы, поэтому циклические `setattr`-вызовы абсолютно валидны. Вместо этого один раз выводится `WARNING`:
 
 ```
-CircularDependencyError: Circular dependency detected:
-ServiceA → ServiceB → ServiceA
+[archtool] WARNING Circular dependency detected: ServiceA → ServiceB → ServiceA.
+Wiring will succeed because all objects are already instantiated, but mutual
+method recursion may cause infinite loops at runtime.
 ```
+
+Это сигнал о дизайне, а не ошибка. Циклическая зависимость часто означает, что два компонента взяли на себя слишком много ответственностей и их стоит разделить.
 
 **Проход 2 — внедрение:**
 

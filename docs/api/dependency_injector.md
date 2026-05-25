@@ -60,7 +60,7 @@ injector.inject()
 
 2. **Layer enforcement** (when `enforce_layers=True`). After Pass 1, archtool checks that no component depends on a component from a higher layer. Raises `TopLevelLayerUsingException` if a boundary is violated. This check runs before any injection, so the container is still clean on failure.
 
-3. **Topological sort + cycle detection.** Before any `setattr` is called, archtool performs a DFS-based topological sort of the dependency graph to determine injection order. If a cycle is detected, raises `CircularDependencyError` immediately with the full cycle path.
+3. **Topological sort.** Before any `setattr` is called, archtool performs a DFS-based topological sort of the dependency graph to determine injection order. If a cycle is detected, a `WARNING` is logged — cycles are valid in the two-pass scheme (all objects already exist) but may indicate mutual method recursion at runtime.
 
 4. **Pass 2 — injection.** Components are processed in topological order (deepest dependencies first). For each instance archtool reads class-level `__annotations__` and calls `setattr(instance, attr_name, dependency_instance)` for each annotated dependency.
 

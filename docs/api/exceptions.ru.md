@@ -92,20 +92,13 @@ archtool принудительно требует одну реализацию
 
 ### `CircularDependencyError`
 
-Выбрасывается во время `inject()`, когда граф зависимостей содержит цикл. archtool выполняет топологическую сортировку (DFS) перед проходом 2. При обнаружении обратного ребра сортировка немедленно прерывается — **до любого вызова `setattr`** — контейнер остаётся в чистом состоянии.
+Публичный класс исключения для использования в кастомном инструментарии или расширениях фреймворка. archtool **не выбрасывает** его автоматически во время `inject()` — циклы допустимы и вместо исключения производят лог `WARNING` (см. [FAQ](../guide/faq.ru.md)).
 
-Сообщение исключения содержит полный путь цикла с короткими именами классов и полными сериализованными ключами:
+```python
+from archtool.exceptions import CircularDependencyError
 
+raise CircularDependencyError(["key.A", "key.B", "key.A"])
 ```
-CircularDependencyError: Circular dependency detected:
-OrderService → PaymentService → OrderService
-
-Full keys: ['myproject.app.orders.interfaces.OrderServiceABC',
-            'myproject.app.payments.interfaces.PaymentServiceABC',
-            'myproject.app.orders.interfaces.OrderServiceABC']
-```
-
-**Решение:** разорвать цикл через общий интерфейс, от которого зависит одна из сторон, или предварительно зарегистрировать один из компонентов через `injector.register()` до `inject()`.
 
 ---
 

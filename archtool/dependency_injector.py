@@ -9,7 +9,6 @@ from typing import TypeVar
 
 from archtool.components.default_component import ComponentPattern
 from archtool.exceptions import (
-    CircularDependencyError,
     DependencyDoesNotRegistred,
     DependencyDuplicate,
     InstantiationError,
@@ -260,19 +259,36 @@ class DependencyInjector(DependencyInjectorInterface):
     def _topological_order(self) -> list[str]:
         """Return dependency keys sorted so every node comes after its dependencies.
 
-        Uses iterative DFS. Raises :exc:`~archtool.exceptions.CircularDependencyError`
-        if the graph contains a cycle.
+        Uses DFS. Cycles are tolerated — in a two-pass DI system all objects are
+        already instantiated before Pass 2, so circular setattr calls are valid.
+        A cycle produces a WARNING in the archtool logger so the user is aware of
+        the potential design smell (mutual method recursion), but injection proceeds.
         """
         visiting: set[str] = set()
         visited: set[str] = set()
         order: list[str] = []
+        warned: bool = False
 
         def visit(key: str, path: list[str]) -> None:
+            nonlocal warned
             if key in visited:
                 return
             if key in visiting:
-                cycle_start = path.index(key)
-                raise CircularDependencyError(path[cycle_start:] + [key])
+                # Back-edge: cycle. Objects already exist, wiring still works.
+                # Warn once per inject() call, skip the back-edge and continue.
+                if not warned:
+                    warned = True
+                    cycle_start = path.index(key)
+                    cycle = path[cycle_start:] + [key]
+                    short = " → ".join(k.split(".")[-1] for k in cycle)
+                    _lib_logger.warning(
+                        "Circular dependency detected: %s. "
+                        "Wiring will succeed because all objects are already "
+                        "instantiated, but mutual method recursion may cause "
+                        "infinite loops at runtime.",
+                        short,
+                    )
+                return
             visiting.add(key)
             path.append(key)
             instance = self.dependencies.get(key)

@@ -92,20 +92,13 @@ Raised by the `archtool validate` CLI command when an `AppModule` fails structur
 
 ### `CircularDependencyError`
 
-Raised during `inject()` when the dependency graph contains a cycle. archtool runs a topological sort (DFS) before Pass 2. If a back-edge is found the sort is aborted immediately — **before any `setattr` is called** — so the container is left in a clean state.
+Available as a public exception class for use in custom tooling or framework extensions. archtool itself **does not raise** this during normal `inject()` — cycles are tolerated and produce a `WARNING` log instead (see [FAQ](../guide/faq.md#what-happens-if-theres-a-circular-dependency)).
 
-The exception message includes the full cycle path with short class names and the full serialised keys:
+```python
+from archtool.exceptions import CircularDependencyError
 
+raise CircularDependencyError(["key.A", "key.B", "key.A"])
 ```
-CircularDependencyError: Circular dependency detected:
-OrderService → PaymentService → OrderService
-
-Full keys: ['myproject.app.orders.interfaces.OrderServiceABC',
-            'myproject.app.payments.interfaces.PaymentServiceABC',
-            'myproject.app.orders.interfaces.OrderServiceABC']
-```
-
-**Fix:** break the cycle by introducing a shared interface that one side depends on, or pre-register one of the components via `injector.register()` before `inject()`.
 
 ---
 

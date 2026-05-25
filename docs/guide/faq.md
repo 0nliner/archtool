@@ -66,14 +66,19 @@ No — archtool enforces **one implementation per interface per module**. If two
 
 ## What happens if there's a circular dependency?
 
-archtool detects cycles **before** Pass 2 starts, via a DFS topological sort. If `ServiceA` depends on `ServiceB` and `ServiceB` depends on `ServiceA`, you get:
+Nothing breaks. In archtool's two-pass scheme all objects are instantiated in Pass 1 before any wiring happens in Pass 2, so `ServiceA.dep = service_b` and `ServiceB.dep = service_a` are valid `setattr` calls — both objects already exist.
+
+archtool does log a `WARNING` once per `inject()` call to flag the cycle:
 
 ```
-CircularDependencyError: Circular dependency detected:
-ServiceA → ServiceB → ServiceA
+[archtool] WARNING Circular dependency detected: ServiceA → ServiceB → ServiceA.
+Wiring will succeed because all objects are already instantiated, but mutual
+method recursion may cause infinite loops at runtime.
 ```
 
-No `setattr` has been called yet, so the container is clean. To break the cycle: either introduce a shared interface that one side depends on, or pre-register one of the instances via `injector.register()` before calling `inject()`.
+This is a **design signal**: if `ServiceA.method()` calls `self.dep.method()` which in turn calls back into `ServiceA`, that will loop infinitely. The warning is there so you notice the cycle exists — not to block wiring.
+
+Enable the warning with `verbose=True` or `ARCHTOOL_VERBOSE=1`.
 
 ---
 
