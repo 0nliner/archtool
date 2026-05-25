@@ -1,0 +1,36 @@
+# archtool
+
+> Auto-wiring dependency injection and Clean Architecture enforcement for Python. Define interfaces, write concrete implementations — archtool scans your modules, discovers interface/implementation pairs, instantiates them, and wires everything together at startup via a two-pass algorithm. Zero boilerplate, zero registration code.
+
+archtool is a Python library (3.10–3.13, MIT) that replaces manual DI wiring with automatic discovery. It enforces Clean Architecture layer boundaries at startup — violations raise an exception before any user code runs. A CLI (`archtool init`, `archtool add-module`) scaffolds new projects and modules.
+
+Install: `pip install archtool`
+
+## Guide
+
+- [Quickstart](https://0nliner.github.io/archtool/guide/quickstart/): Full working project from scratch in 5 minutes — scaffold, add modules, define interfaces, write implementations, wire
+- [How it works](https://0nliner.github.io/archtool/guide/concepts/): Two-pass injection algorithm, topological sort, layer enforcement, and the assembly test pattern
+- [Module structure](https://0nliner.github.io/archtool/guide/modules/): What goes in interfaces.py, repos.py, services.py and why
+- [Built-in layers](https://0nliner.github.io/archtool/guide/layers/): Infrastructure → Domain → Application → Presentation and how to configure them
+- [Custom layers](https://0nliner.github.io/archtool/guide/custom_layers/): Defining your own layer hierarchy with ComponentPattern
+- [Interface-first design](https://0nliner.github.io/archtool/guide/interface_first/): ABCRepo, ABCService, ABCController, ABCView markers and why interfaces come first
+- [Manual registration](https://0nliner.github.io/archtool/guide/manual_registration/): register() for async resources, third-party objects, config, test stubs, conditional implementations
+- [CLI](https://0nliner.github.io/archtool/guide/cli/): archtool init, add-module, validate, graph commands
+- [FAQ](https://0nliner.github.io/archtool/guide/faq/): Common errors, circular deps, from __future__ import annotations, constructor arguments, async support
+
+## API Reference
+
+- [DependencyInjector](https://0nliner.github.io/archtool/api/dependency_injector/): Constructor params, inject(), register(), get_dependency(), dependencies dict
+- [AppModule](https://0nliner.github.io/archtool/api/app_module/): import_path, ignore, validate()
+- [Exceptions](https://0nliner.github.io/archtool/api/exceptions/): All archtool exceptions — DependencyDoesNotRegistred, TopLevelLayerUsingException, InstantiationError, DependencyDuplicate, CircularDependencyError, and more
+
+## Examples
+
+- [Basic project](https://0nliner.github.io/archtool/examples/basic/): Single-module and cross-module wiring
+- [Nested modules](https://0nliner.github.io/archtool/examples/nested/): payments.gateway, payments.billing as independent bounded contexts
+- [FastAPI integration](https://0nliner.github.io/archtool/examples/web_fractal/): archtool with FastAPI lifespan startup
+
+## Optional
+
+- [Why archtool?](https://0nliner.github.io/archtool/why/): Problems with manual DI at scale
+- [Comparison](https://0nliner.github.io/archtool/guide/comparison/): vs dependency-injector, injector, manual DI, FastAPI Depends

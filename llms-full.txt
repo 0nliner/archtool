@@ -1,0 +1,413 @@
+# archtool — Complete Reference for AI Assistants
+
+Version: 2.1.0 | Python: 3.10–3.13 | License: MIT
+PyPI: https://pypi.org/project/archtool
+Docs: https://0nliner.github.io/archtool
+GitHub: https://github.com/0nliner/archtool
+
+---
+
+## What archtool is
+
+archtool is a Python dependency injection library that eliminates manual wiring boilerplate. It implements a two-pass DI algorithm:
+
+- **Pass 1**: scans `interfaces.py` in each registered module, finds abstract/concrete class pairs, instantiates concrete classes as `Class()`, and builds a registry.
+- **Pass 2**: reads class-level `__annotations__` from each registered instance and calls `setattr(instance, attr_name, dependency_instance)` for each annotated dependency.
+
+Layer boundary violations are checked between the two passes and raise an exception at startup — before any user code runs.
+
+---
+
+## Installation
+
+```bash
+pip install archtool
+```
+
+---
+
+## Core concepts
+
+### Module structure
+
+Each bounded-context module contains:
+
+```
+app/users/
+├── __init__.py
+├── interfaces.py   ← abstract classes (contracts)
+├── services.py     ← concrete service implementations
+└── repos.py        ← concrete repository implementations
+```
+
+### Layer markers (interface base classes)
+
+archtool discovers interfaces by checking which layer marker they inherit from:
+
+```python
+from archtool.layers.default_layer_interfaces import ABCRepo, ABCService, ABCController, ABCView
+```
+
+- `ABCRepo` — Infrastructure layer. File: `repos.py`
+- `ABCService` — Domain layer. File: `services.py`
+- `ABCController` — Application layer. File: `controllers.py`
+- `ABCView` — Presentation layer. File: `views.py`
+
+### Defining interfaces
+
+```python
+# app/users/interfaces.py
+from abc import abstractmethod
+from archtool.layers.default_layer_interfaces import ABCService, ABCRepo
+
+class UserRepoABC(ABCRepo):
+    @abstractmethod
+    def find_all(self) -> list[str]: ...
+
+class UserServiceABC(ABCService):
+    @abstractmethod
+    def get_name(self) -> str: ...
+```
+
+### Defining implementations
+
+Concrete classes inherit from their interface. **No __init__ parameters** — archtool calls `Class()`.
+Dependencies are declared as class-level annotations on the concrete class (not the interface).
+
+```python
+# app/users/repos.py
+from .interfaces import UserRepoABC
+
+class UserRepo(UserRepoABC):
+    def find_all(self) -> list[str]:
+        return ["alice", "bob"]
+```
+
+```python
+# app/users/services.py
+from .interfaces import UserServiceABC, UserRepoABC
+
+class UserService(UserServiceABC):
+    repo: UserRepoABC   # archtool wires UserRepo here via setattr
+
+    def get_name(self) -> str:
+        return self.repo.find_all()[0]
+```
+
+### Cross-module dependencies
+
+A service in one module can depend on an interface from another module:
+
+```python
+# app/orders/services.py
+from app.users.interfaces import UserServiceABC   # cross-module
+from .interfaces import OrderServiceABC, OrderRepoABC
+
+class OrderService(OrderServiceABC):
+    repo: OrderRepoABC
+    user_svc: UserServiceABC   # resolved from app.users module
+
+    def place(self, user_id: str, items: list) -> dict:
+        user = self.user_svc.get_name()
+        return {"user": user, "items": items}
+```
+
+---
+
+## DependencyInjector
+
+### Constructor
+
+```python
+from pathlib import Path
+from archtool.dependency_injector import DependencyInjector
+from archtool.global_types import AppModule
+
+injector = DependencyInjector(
+    modules_list=[
+        AppModule("app.users"),
+        AppModule("app.orders"),
+        AppModule("app.payments"),
+    ],
+    project_root=Path(__file__).parent.parent,  # pass explicitly — avoids sys.path hacks
+    layers=None,        # None = use 4 built-in Clean Architecture layers
+    verbose=False,      # True or ARCHTOOL_VERBOSE=1 for debug logging
+    enforce_layers=True,  # True = check layer boundary violations between passes
+)
+injector.inject()
+```
+
+### Parameters
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `modules_list` | `list[AppModule]` | required | Bounded-context modules to scan |
+| `layers` | `list[type[Layer]] \| None` | `None` | Layer definitions. None = 4 built-in layers |
+| `project_root` | `Path \| None` | `None` | Absolute path to project root. When None, walks up from cwd looking for pyproject.toml/.git/setup.cfg |
+| `verbose` | `bool \| None` | `None` | Debug logging to stderr. Also: ARCHTOOL_VERBOSE=1 |
+| `enforce_layers` | `bool` | `True` | Check layer boundary violations. Set False to skip |
+
+### inject()
+
+Runs the two-pass DI algorithm. Call once after constructing the injector and after any register() calls.
+
+```python
+injector.inject()
+```
+
+### register(key, value, inject_into=True)
+
+Manually register a dependency before inject(). Used for:
+- Async resources (database pools, HTTP clients)
+- Third-party objects without archtool annotations
+- Config objects
+- Test stubs / conditional implementations
+
+```python
+injector.register(key=UserRepoABC, value=stub_repo)
+injector.inject()
+# Auto-discovery skips UserRepoABC — stub is used instead
+```
+
+```python
+# async resource
+engine = create_async_engine(DATABASE_URL)
+session_maker = async_sessionmaker(engine, class_=AsyncSession)
+injector.register(key=async_sessionmaker, value=session_maker, inject_into=False)
+injector.inject()
+```
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `key` | `type` | required | Interface class (same class used in annotations) |
+| `value` | `object` | required | Instance to register |
+| `inject_into` | `bool` | `True` | When True, Pass 2 also wires this instance's own annotations |
+
+Raises `DependencyDuplicate` if a different instance is already registered for the same key.
+
+### get_dependency(key)
+
+Retrieve a registered dependency after inject().
+
+```python
+svc = injector.get_dependency(UserServiceABC)
+```
+
+Raises `DependencyDoesNotRegistred` if not found.
+
+### dependencies
+
+Plain dict mapping serialised interface paths to instances. Available after inject().
+
+```python
+injector.inject()
+
+# iterate all registered components
+for key, instance in injector.dependencies.items():
+    print(key, "→", type(instance).__name__)
+
+# direct lookup
+repo = injector.dependencies["myproject.app.users.interfaces.UserRepoABC"]
+```
+
+---
+
+## AppModule
+
+```python
+from archtool.global_types import AppModule
+
+AppModule(
+    import_path="app.users",    # dotted Python import path
+    ignore=[],                  # list of ComponentPatterns to skip for this module
+)
+```
+
+Modules can be nested: `AppModule("app.payments.gateway")`.
+
+---
+
+## Built-in layers (default)
+
+Four layers, ordered from outermost to innermost:
+
+| Layer class | File scanned | Marker | Can depend on |
+|---|---|---|---|
+| `PresentationLayer` | `views.py` | `ABCView` | ApplicationLayer |
+| `ApplicationLayer` | `controllers.py` | `ABCController` | DomainLayer |
+| `DomainLayer` | `services.py` | `ABCService` | InfrastructureLayer |
+| `InfrastructureLayer` | `repos.py` | `ABCRepo` | nothing |
+
+Dependency direction: Presentation → Application → Domain → Infrastructure.
+Inner layers must not depend on outer layers (e.g. a service must not depend on a controller).
+
+---
+
+## CLI
+
+```bash
+# Scaffold a new project
+archtool init myapp
+
+# Add a new module (creates files + registers in custom_layers.py)
+archtool add-module orders
+archtool add-module payments.gateway   # nested module
+
+# Validate module structure
+archtool validate
+
+# Show dependency graph
+archtool graph
+```
+
+---
+
+## Exceptions
+
+All exceptions inherit from `ArchToolError`.
+
+```python
+from archtool.exceptions import (
+    ArchToolError,
+    DependencyDoesNotRegistred,  # key not in registry — check modules_list and file names
+    DependencyDuplicate,          # register() called twice with different instances for same key
+    TopLevelLayerUsingException,  # layer boundary violated — caught at startup
+    InstantiationError,           # Class() failed — use register() for classes with __init__ args
+    MultipleRealizationsException,# more than one concrete class implements the same interface
+    RealizationNotFound,          # interface declared but no concrete implementation found
+    ModuleValidationError,        # AppModule.validate() failed (e.g. missing interfaces.py)
+    CircularDependencyError,      # available for custom tooling — not raised automatically
+    AnnotationsNotResolvableError,# from __future__ import annotations + unresolvable forward ref
+)
+```
+
+### InstantiationError
+
+Raised when a concrete class has __init__ parameters. Fix: pre-register via register().
+
+```
+InstantiationError: Cannot instantiate 'UserRepo': __init__() missing 1
+required positional argument: 'db_url'
+
+archtool requires a no-argument __init__. Use injector.register(InterfaceABC,
+your_instance) before inject() to provide instances that need constructor arguments.
+```
+
+### DependencyDoesNotRegistred
+
+Raised in get_dependency() and during Pass 2 when a required annotation can't be resolved.
+
+Common causes:
+- The module owning the interface is not in modules_list
+- Concrete class is missing or in the wrong file (e.g. in services.py instead of repos.py)
+- Interface doesn't inherit the correct layer marker (ABCRepo, ABCService, etc.)
+
+### TopLevelLayerUsingException
+
+Raised between passes when enforce_layers=True and a component depends on one from a disallowed layer. Message includes class names, layers, and the fix.
+
+### Circular dependencies
+
+archtool does NOT raise on cycles. In the two-pass scheme all objects are instantiated before wiring, so circular setattr is valid. Instead, a WARNING is logged once:
+
+```
+[archtool] WARNING Circular dependency detected: ServiceA → ServiceB → ServiceA.
+Wiring will succeed because all objects are already instantiated, but mutual
+method recursion may cause infinite loops at runtime.
+```
+
+---
+
+## Common patterns
+
+### Assembly test (recommended)
+
+```python
+# tests/test_assembly.py
+from pathlib import Path
+from archtool.dependency_injector import DependencyInjector
+from app.archtool_conf.custom_layers import APPS, app_layers
+
+ROOT = Path(__file__).parent.parent
+
+def test_di_assembles():
+    injector = DependencyInjector(modules_list=APPS, layers=app_layers, project_root=ROOT)
+    injector.inject()  # raises on any wiring error — catches problems before production
+```
+
+### FastAPI integration
+
+```python
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    engine = create_async_engine(DATABASE_URL)
+    session_maker = async_sessionmaker(engine, class_=AsyncSession)
+
+    injector = DependencyInjector(modules_list=APPS, project_root=ROOT)
+    injector.register(key=async_sessionmaker, value=session_maker, inject_into=False)
+    injector.inject()
+
+    app.state.injector = injector
+    yield
+    await engine.dispose()
+
+app = FastAPI(lifespan=lifespan)
+```
+
+### Test stub
+
+```python
+def test_order_service():
+    stub_repo = StubOrderRepo(orders=[{"id": 1}])
+
+    injector = DependencyInjector(modules_list=[AppModule("app.orders")], project_root=ROOT)
+    injector.register(key=OrderRepoABC, value=stub_repo)
+    injector.inject()
+
+    svc = injector.get_dependency(OrderServiceABC)
+    result = svc.place(user_id="u1", items=["item"])
+    assert result["status"] == "ok"
+```
+
+### Config object
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class AppConfig:
+    stripe_key: str
+    db_url: str
+
+class AppConfigABC(ABC): ...
+
+config = AppConfig(stripe_key=os.environ["STRIPE_KEY"], db_url=os.environ["DATABASE_URL"])
+injector.register(key=AppConfigABC, value=config, inject_into=False)
+injector.inject()
+
+# In any service:
+class PaymentService(PaymentServiceABC):
+    config: AppConfigABC   # receives the AppConfig instance
+```
+
+### Enabling debug logging
+
+```bash
+ARCHTOOL_VERBOSE=1 python entrypoints/run.py
+```
+
+```python
+DependencyInjector(modules_list=[...], verbose=True)
+```
+
+---
+
+## What archtool does NOT do
+
+- Does not support scoped/request-scoped lifetime — all instances are singletons created once at startup.
+- Does not support factory functions as dependencies — register a pre-built instance instead.
+- Does not manage async lifecycle — use FastAPI lifespan or similar for async resource teardown.
+- Does not support more than one implementation per interface per module — use register() for conditional swapping.
