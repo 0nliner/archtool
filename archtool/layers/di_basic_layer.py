@@ -84,8 +84,8 @@ class LayerBase(type):
         return new_layer_class
 
     @classmethod
-    def __or__(cls, other: "LayerBase"):
-        return frozenset(cls, other)
+    def __or__(cls, other: "LayerBase") -> frozenset:  # type: ignore[override]
+        return frozenset([cls, other])
 
     @property
     @abstractmethod

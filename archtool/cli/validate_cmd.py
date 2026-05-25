@@ -20,7 +20,7 @@ def _load_apps(custom_layers_path: Path) -> list | None:
         return None
     mod = importlib.util.module_from_spec(spec)
     try:
-        spec.loader.exec_module(mod)  # type: ignore[attr-defined]
+        spec.loader.exec_module(mod)
     except Exception as exc:
         console.print(f"[red]Error loading {custom_layers_path}: {exc}[/red]")
         return None
@@ -99,7 +99,7 @@ def validate(project_root: str, verbose: bool) -> None:
                 verbose=verbose,
             )
             injector.inject()
-            count = len(injector._dependencies)
+            count = len(injector.dependencies)
             table.add_row(
                 module.import_path,
                 "[green]✓ ok[/green]",

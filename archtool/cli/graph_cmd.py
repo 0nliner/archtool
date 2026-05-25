@@ -24,12 +24,12 @@ def _find_custom_layers(root: Path) -> Path | None:
     return None
 
 
-def _load_apps(path: Path):  # type: ignore[return]
+def _load_apps(path: Path) -> list | None:
     spec = importlib.util.spec_from_file_location("_archtool_conf", path)
     if spec is None or spec.loader is None:
         return None
     mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)  # type: ignore[attr-defined]
+    spec.loader.exec_module(mod)
     return getattr(mod, "APPS", None)
 
 
@@ -74,10 +74,10 @@ def graph(project_root: str, fmt: str) -> None:
 
     # build edges: instance → [dependency instances]
     edges: list[tuple[str, str]] = []
-    for _key, instance in injector._dependencies.items():
+    for _key, instance in injector.dependencies.items():
         cls_name = type(instance).__name__
         for dep in get_dependencies(instance):
-            dep_inst = injector._dependencies.get(dep.asked)
+            dep_inst = injector.dependencies.get(dep.asked)
             dep_name = type(dep_inst).__name__ if dep_inst else dep.asked.split(".")[-1]
             edges.append((cls_name, dep_name))
 
@@ -93,7 +93,7 @@ def graph(project_root: str, fmt: str) -> None:
     tree = Tree("[bold]archtool dependency graph[/bold]")
     nodes: dict[str, Tree] = {}
 
-    for _key, instance in injector._dependencies.items():
+    for _key, instance in injector.dependencies.items():
         cls_name = type(instance).__name__
         if cls_name not in nodes:
             nodes[cls_name] = tree.add(f"[cyan]{cls_name}[/cyan]")
@@ -102,8 +102,8 @@ def graph(project_root: str, fmt: str) -> None:
         if src in nodes:
             nodes[src].add(f"[dim]→[/dim] {dst}")
 
-    if not edges and injector._dependencies:
-        for _key, instance in injector._dependencies.items():
+    if not edges and injector.dependencies:
+        for _key, instance in injector.dependencies.items():
             tree.add(f"[cyan]{type(instance).__name__}[/cyan] [dim](no deps)[/dim]")
 
     console.print(tree)

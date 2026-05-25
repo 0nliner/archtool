@@ -115,7 +115,7 @@ class DependencyInjector(DependencyInjectorInterface):
         for layer in self.layers:
             if not isinstance(layer, Layer):
                 continue
-            for component_pattern in layer.component_groups:
+            for component_pattern in layer.component_groups:  # type: ignore[attr-defined]
                 modules_to_use = self._exclude_ignored(component_pattern)
                 _lib_logger.debug(
                     "layer component '%s': scanning %d modules",

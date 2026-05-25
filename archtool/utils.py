@@ -85,7 +85,7 @@ def resolve_import_path(obj: object | str) -> str:
 
     # obj is a class or module — resolve via filesystem path
     try:
-        file_path = Path(getfile(obj)).resolve()
+        file_path = Path(getfile(obj)).resolve()  # type: ignore[arg-type]
     except (TypeError, OSError) as exc:
         raise TypeError(f"Cannot determine source file for {obj!r}: {exc}") from exc
 
