@@ -1,28 +1,42 @@
 name: Publish to PyPI
 
-# Triggers on every push to main.
-# A "check" job reads the version from pyproject.toml and skips the whole
-# pipeline if the tag vX.Y.Z already exists — making it safe to push to
-# main without bumping the version (e.g. docs-only changes).
+# Triggers on every push to main/master.
+# Auto-bumps the version from conventional commits since the last tag.
+# The bump commit itself carries "[skip ci]" so it doesn't re-trigger.
 on:
   push:
     branches: ["main", "master"]
 
 jobs:
-  check:
-    name: Check version / should release?
+  bump-and-publish:
+    name: Bump version, test, build, publish
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.ver.outputs.version }}
-      should_release: ${{ steps.tag_check.outputs.should_release }}
+    # Skip the bump commit itself so we don't loop.
+    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+    permissions:
+      contents: write
+      id-token: write
+    environment:
+      name: pypi
+      url: https://pypi.org/p/archtool
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # Use a PAT so the bump commit triggers downstream workflows (e.g. docs).
+          # Falls back to GITHUB_TOKEN — the push will still work, but downstream
+          # on:push triggers will be skipped by GitHub for bot-authored pushes.
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
 
-      - name: Read version from pyproject.toml
-        id: ver
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # ── 1. Read current version ──────────────────────────────────────────────
+      - name: Read current version
+        id: current
         run: |
           VERSION=$(python3 -c "
           import tomllib
@@ -30,97 +44,149 @@ jobs:
               print(tomllib.load(f)['project']['version'])
           ")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Version: $VERSION"
+          echo "Current version: $VERSION"
 
-      - name: Check if tag already exists
-        id: tag_check
+      # ── 2. Determine bump type from conventional commits ─────────────────────
+      - name: Determine bump type
+        id: bump
         run: |
-          VERSION="${{ steps.ver.outputs.version }}"
-          if git tag --list | grep -q "^v${VERSION}$"; then
-            echo "Tag v${VERSION} already exists — skipping release."
+          LAST_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1 || true)
+          if [ -z "$LAST_TAG" ]; then
+            echo "No previous tag found — treating all commits as releasable (patch bump)."
+            LOG=$(git log --pretty=format:"%s")
+          else
+            echo "Last tag: $LAST_TAG"
+            LOG=$(git log "${LAST_TAG}..HEAD" --pretty=format:"%s")
+          fi
+
+          echo "Commits since last tag:"
+          echo "$LOG"
+
+          BUMP="none"
+
+          while IFS= read -r line; do
+            # BREAKING CHANGE anywhere in message → major
+            if echo "$line" | grep -qE '(BREAKING CHANGE|^[a-z]+(\([^)]+\))?!:)'; then
+              BUMP="major"
+              break
+            fi
+            # feat: → minor (unless already major)
+            if echo "$line" | grep -qE '^feat(\([^)]+\))?:'; then
+              BUMP="minor"
+            fi
+            # fix/perf/refactor/ci/chore → patch (unless already minor or major)
+            if [ "$BUMP" = "none" ]; then
+              if echo "$line" | grep -qE '^(fix|perf|refactor|ci|chore|style|test|build)(\([^)]+\))?:'; then
+                BUMP="patch"
+              fi
+            fi
+          done <<< "$LOG"
+
+          echo "Bump type: $BUMP"
+          echo "bump_type=$BUMP" >> "$GITHUB_OUTPUT"
+
+      # ── 3. Compute new version ───────────────────────────────────────────────
+      - name: Compute new version
+        id: new_version
+        if: steps.bump.outputs.bump_type != 'none'
+        run: |
+          CURRENT="${{ steps.current.outputs.version }}"
+          BUMP_TYPE="${{ steps.bump.outputs.bump_type }}"
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          case "$BUMP_TYPE" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+
+      # ── 4. Check tag doesn't already exist ──────────────────────────────────
+      - name: Check tag existence
+        id: tag_check
+        if: steps.bump.outputs.bump_type != 'none'
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.version }}"
+          if git tag --list | grep -q "^v${NEW_VERSION}$"; then
+            echo "Tag v${NEW_VERSION} already exists — skipping release."
             echo "should_release=false" >> "$GITHUB_OUTPUT"
           else
-            echo "New version v${VERSION} — will build and release."
             echo "should_release=true" >> "$GITHUB_OUTPUT"
           fi
 
-  build:
-    name: Build and test
-    needs: check
-    if: needs.check.outputs.should_release == 'true'
-    runs-on: ubuntu-latest
+      # ── 5. Update pyproject.toml ─────────────────────────────────────────────
+      - name: Bump version in pyproject.toml
+        if: >-
+          steps.bump.outputs.bump_type != 'none' &&
+          steps.tag_check.outputs.should_release == 'true'
+        run: |
+          OLD="${{ steps.current.outputs.version }}"
+          NEW="${{ steps.new_version.outputs.version }}"
+          sed -i "s/^version = \"${OLD}\"/version = \"${NEW}\"/" pyproject.toml
+          grep '^version' pyproject.toml
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-
+      # ── 6. Run tests ─────────────────────────────────────────────────────────
       - name: Run tests
+        if: >-
+          steps.bump.outputs.bump_type != 'none' &&
+          steps.tag_check.outputs.should_release == 'true'
         run: |
           pip install -e ".[dev]"
           pytest --tb=short -q
 
-      - name: Build wheel and sdist
+      # ── 7. Build wheel + sdist ───────────────────────────────────────────────
+      - name: Build
+        if: >-
+          steps.bump.outputs.bump_type != 'none' &&
+          steps.tag_check.outputs.should_release == 'true'
         run: |
           pip install build
           python -m build
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
+      # ── 8. Commit version bump ───────────────────────────────────────────────
+      - name: Commit and push version bump
+        if: >-
+          steps.bump.outputs.bump_type != 'none' &&
+          steps.tag_check.outputs.should_release == 'true'
+        run: |
+          NEW="${{ steps.new_version.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml
+          git commit -m "bump: v${NEW} [skip ci]"
+          git push
 
-  publish:
-    name: Publish to PyPI
-    needs: [check, build]
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/archtool
-    permissions:
-      id-token: write
+      # ── 9. Create and push tag ───────────────────────────────────────────────
+      - name: Tag release
+        if: >-
+          steps.bump.outputs.bump_type != 'none' &&
+          steps.tag_check.outputs.should_release == 'true'
+        run: |
+          NEW="${{ steps.new_version.outputs.version }}"
+          git tag "v${NEW}"
+          git push origin "v${NEW}"
 
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      # ── 10. Publish to PyPI ──────────────────────────────────────────────────
+      - name: Publish to PyPI
+        if: >-
+          steps.bump.outputs.bump_type != 'none' &&
+          steps.tag_check.outputs.should_release == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
 
-  release:
-    name: Create GitHub Release
-    needs: [check, publish]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
+      # ── 11. Create GitHub Release ────────────────────────────────────────────
+      - name: Create GitHub Release
+        if: >-
+          steps.bump.outputs.bump_type != 'none' &&
+          steps.tag_check.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v2
         with:
-          fetch-depth: 0
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - name: Create and push tag
-        run: |
-          VERSION="${{ needs.check.outputs.version }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag "v${VERSION}"
-          git push origin "v${VERSION}"
-
-      - uses: softprops/action-gh-release@v2
-        with:
-          tag_name: "v${{ needs.check.outputs.version }}"
-          name: "v${{ needs.check.outputs.version }}"
+          tag_name: "v${{ steps.new_version.outputs.version }}"
+          name: "v${{ steps.new_version.outputs.version }}"
           files: dist/*
           generate_release_notes: true
