@@ -1,14 +1,55 @@
 name: Publish to PyPI
 
+# Triggers on every push to main.
+# A "check" job reads the version from pyproject.toml and skips the whole
+# pipeline if the tag vX.Y.Z already exists — making it safe to push to
+# main without bumping the version (e.g. docs-only changes).
 on:
   push:
-    tags:
-      - "v*"
+    branches: ["main", "master"]
 
 jobs:
-  build:
-    name: Build distribution
+  check:
+    name: Check version / should release?
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      should_release: ${{ steps.tag_check.outputs.should_release }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version from pyproject.toml
+        id: ver
+        run: |
+          VERSION=$(python3 -c "
+          import tomllib
+          with open('pyproject.toml', 'rb') as f:
+              print(tomllib.load(f)['project']['version'])
+          ")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION"
+
+      - name: Check if tag already exists
+        id: tag_check
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          if git tag --list | grep -q "^v${VERSION}$"; then
+            echo "Tag v${VERSION} already exists — skipping release."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "New version v${VERSION} — will build and release."
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build and test
+    needs: check
+    if: needs.check.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -17,7 +58,7 @@ jobs:
           python-version: "3.12"
           cache: pip
 
-      - name: Run tests before publishing
+      - name: Run tests
         run: |
           pip install -e ".[dev]"
           pytest --tb=short -q
@@ -34,7 +75,7 @@ jobs:
 
   publish:
     name: Publish to PyPI
-    needs: build
+    needs: [check, build]
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -54,20 +95,32 @@ jobs:
 
   release:
     name: Create GitHub Release
-    needs: publish
+    needs: [check, publish]
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
 
+      - name: Create and push tag
+        run: |
+          VERSION="${{ needs.check.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
+
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: "v${{ needs.check.outputs.version }}"
+          name: "v${{ needs.check.outputs.version }}"
           files: dist/*
           generate_release_notes: true

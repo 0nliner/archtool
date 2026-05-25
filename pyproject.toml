@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "archtool"
-version = "2.0.1"
+version = "2.1.0"
 description = "Auto-wiring DI + layer enforcement for Python. Define interfaces, write implementations — archtool assembles everything."
 readme = "README.md"
 license = { text = "MIT" }
