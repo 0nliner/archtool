@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    <url>
+        <loc>https://0nliner.github.io/archtool/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/why/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/why/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/why/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/api/app_module/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/api/app_module/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/api/app_module/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/api/dependency_injector/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/api/dependency_injector/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/api/dependency_injector/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/api/exceptions/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/api/exceptions/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/api/exceptions/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/examples/basic/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/examples/basic/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/examples/basic/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/examples/nested/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/examples/nested/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/examples/nested/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/examples/web_fractal/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/examples/web_fractal/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/examples/web_fractal/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/guide/cli/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/cli/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/cli/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/guide/comparison/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/comparison/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/comparison/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/guide/concepts/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/concepts/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/concepts/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/guide/custom_layers/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/custom_layers/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/custom_layers/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/guide/faq/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/faq/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/faq/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/guide/installation/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/installation/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/installation/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/guide/interface_first/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/interface_first/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/interface_first/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/guide/layers/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/layers/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/layers/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/guide/manual_registration/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/manual_registration/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/manual_registration/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/guide/modules/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/modules/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/modules/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/guide/quickstart/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/quickstart/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/quickstart/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/tutorials/basic_example/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/tutorials/basic_example/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/tutorials/basic_example/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/why/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/why/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/why/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/api/app_module/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/api/app_module/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/api/app_module/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/api/dependency_injector/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/api/dependency_injector/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/api/dependency_injector/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/api/exceptions/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/api/exceptions/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/api/exceptions/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/examples/basic/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/examples/basic/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/examples/basic/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/examples/nested/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/examples/nested/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/examples/nested/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/examples/web_fractal/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/examples/web_fractal/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/examples/web_fractal/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/guide/cli/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/cli/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/cli/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/guide/comparison/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/comparison/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/comparison/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/guide/concepts/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/concepts/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/concepts/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/guide/custom_layers/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/custom_layers/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/custom_layers/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/guide/faq/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/faq/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/faq/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/guide/installation/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/installation/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/installation/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/guide/interface_first/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/interface_first/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/interface_first/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/guide/layers/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/layers/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/layers/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/guide/manual_registration/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/manual_registration/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/manual_registration/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/guide/modules/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/modules/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/modules/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/guide/quickstart/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/guide/quickstart/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/guide/quickstart/"/>
+    </url>
+    <url>
+        <loc>https://0nliner.github.io/archtool/ru/tutorials/basic_example/</loc>
+        <lastmod>2026-05-25</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://0nliner.github.io/archtool/ru/tutorials/basic_example/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://0nliner.github.io/archtool/tutorials/basic_example/"/>
+    </url>
+</urlset>
