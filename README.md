@@ -1,5 +1,7 @@
 # archtool
 
+### 📖 [Full documentation → 0nliner.github.io/archtool](https://0nliner.github.io/archtool)
+
 **Auto-wiring dependency injection and layer enforcement for Python.**  
 Define interfaces. Write implementations. archtool assembles everything at startup — zero registration code, zero wiring boilerplate.
 
