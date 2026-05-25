@@ -64,13 +64,42 @@ No — archtool enforces **one implementation per interface per module**. If two
 
 ---
 
+## What happens if there's a circular dependency?
+
+archtool detects cycles **before** Pass 2 starts, via a DFS topological sort. If `ServiceA` depends on `ServiceB` and `ServiceB` depends on `ServiceA`, you get:
+
+```
+CircularDependencyError: Circular dependency detected:
+ServiceA → ServiceB → ServiceA
+```
+
+No `setattr` has been called yet, so the container is clean. To break the cycle: either introduce a shared interface that one side depends on, or pre-register one of the instances via `injector.register()` before calling `inject()`.
+
+---
+
+## My class has constructor arguments — archtool can't instantiate it
+
+archtool calls `Class()` with no arguments. If your class needs them, pre-register the fully constructed instance:
+
+```python
+repo = UserRepo(db_url=os.environ["DATABASE_URL"])
+
+injector = DependencyInjector(modules_list=APPS, project_root=ROOT)
+injector.register(key=UserRepoABC, value=repo)
+injector.inject()  # skips auto-discovery for UserRepoABC, uses your instance
+```
+
+Without `register()`, archtool raises `InstantiationError` with a message that points you to this exact fix.
+
+---
+
 ## How do I see what was injected?
 
-After calling `inject()`, inspect `injector._dependencies`:
+After calling `inject()`, inspect `injector.dependencies`:
 
 ```python
 injector.inject()
-for key, obj in injector._dependencies.items():
+for key, obj in injector.dependencies.items():
     print(key, "→", type(obj).__name__)
 ```
 

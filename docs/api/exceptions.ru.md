@@ -5,8 +5,10 @@
 ```python
 from archtool.exceptions import (
     ArchToolError,
+    CircularDependencyError,
     DependencyDuplicate,
     DependencyDoesNotRegistred,
+    InstantiationError,
     TopLevelLayerUsingException,
     MultipleRealizationsException,
     RealizationNotFound,
@@ -85,6 +87,43 @@ archtool принудительно требует одну реализацию
 ### `ModuleValidationError`
 
 Выбрасывается командой CLI `archtool validate`, когда `AppModule` не проходит структурные проверки (например, отсутствует `interfaces.py`).
+
+---
+
+### `CircularDependencyError`
+
+Выбрасывается во время `inject()`, когда граф зависимостей содержит цикл. archtool выполняет топологическую сортировку (DFS) перед проходом 2. При обнаружении обратного ребра сортировка немедленно прерывается — **до любого вызова `setattr`** — контейнер остаётся в чистом состоянии.
+
+Сообщение исключения содержит полный путь цикла с короткими именами классов и полными сериализованными ключами:
+
+```
+CircularDependencyError: Circular dependency detected:
+OrderService → PaymentService → OrderService
+
+Full keys: ['myproject.app.orders.interfaces.OrderServiceABC',
+            'myproject.app.payments.interfaces.PaymentServiceABC',
+            'myproject.app.orders.interfaces.OrderServiceABC']
+```
+
+**Решение:** разорвать цикл через общий интерфейс, от которого зависит одна из сторон, или предварительно зарегистрировать один из компонентов через `injector.register()` до `inject()`.
+
+---
+
+### `InstantiationError`
+
+Выбрасывается, когда archtool не может вызвать `impl_class()` без аргументов в проходе 1.
+
+archtool всегда инстанциирует конкретные классы как `Class()`. Если конструктор требует позиционные аргументы — вызов упадёт с `TypeError`, который перебрасывается как `InstantiationError` с понятным сообщением:
+
+```
+InstantiationError: Cannot instantiate 'UserRepo': __init__() missing 1
+required positional argument: 'db_url'
+
+archtool requires a no-argument __init__. Use injector.register(InterfaceABC,
+your_instance) before inject() to provide instances that need constructor arguments.
+```
+
+**Решение:** предварительно зарегистрировать экземпляр через `register()` до вызова `inject()`.
 
 ---
 

@@ -70,9 +70,20 @@ archtool walks every layer's `ComponentPattern`. For example, `InfrastructureLay
 
 Then `DomainLayer` repeats the same for `ABCService` / `services.py`.
 
+**Between passes — topological sort and cycle detection:**
+
+Before any `setattr` is called, archtool sorts registered components so that each dependency is always wired before the component that uses it. This is a DFS-based topological sort over the dependency graph.
+
+If the graph contains a cycle (`ServiceA` needs `ServiceB` needs `ServiceA`), archtool raises `CircularDependencyError` immediately — before touching any object — with the full cycle path in the message:
+
+```
+CircularDependencyError: Circular dependency detected:
+ServiceA → ServiceB → ServiceA
+```
+
 **Pass 2 — inject:**
 
-For every registered instance, archtool reads its class-level annotations. For `UserService`:
+Components are processed in topological order (deepest dependencies first). For each instance archtool reads its class-level annotations. For `UserService`:
 
 ```
 vars(UserService).__annotations__ == {"repo": UserRepoABC}

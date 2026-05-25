@@ -5,8 +5,10 @@ All archtool exceptions inherit from `ArchToolError`.
 ```python
 from archtool.exceptions import (
     ArchToolError,
+    CircularDependencyError,
     DependencyDuplicate,
     DependencyDoesNotRegistred,
+    InstantiationError,
     TopLevelLayerUsingException,
     MultipleRealizationsException,
     RealizationNotFound,
@@ -85,6 +87,43 @@ Raised when an interface is declared in `interfaces.py` but no concrete implemen
 ### `ModuleValidationError`
 
 Raised by the `archtool validate` CLI command when an `AppModule` fails structural checks (e.g. missing `interfaces.py`).
+
+---
+
+### `CircularDependencyError`
+
+Raised during `inject()` when the dependency graph contains a cycle. archtool runs a topological sort (DFS) before Pass 2. If a back-edge is found the sort is aborted immediately — **before any `setattr` is called** — so the container is left in a clean state.
+
+The exception message includes the full cycle path with short class names and the full serialised keys:
+
+```
+CircularDependencyError: Circular dependency detected:
+OrderService → PaymentService → OrderService
+
+Full keys: ['myproject.app.orders.interfaces.OrderServiceABC',
+            'myproject.app.payments.interfaces.PaymentServiceABC',
+            'myproject.app.orders.interfaces.OrderServiceABC']
+```
+
+**Fix:** break the cycle by introducing a shared interface that one side depends on, or pre-register one of the components via `injector.register()` before `inject()`.
+
+---
+
+### `InstantiationError`
+
+Raised when archtool cannot call `impl_class()` with no arguments during Pass 1.
+
+archtool always instantiates concrete classes as `Class()`. If the constructor requires positional arguments it will fail with `TypeError`, which is re-raised as `InstantiationError` with a clear message:
+
+```
+InstantiationError: Cannot instantiate 'UserRepo': __init__() missing 1
+required positional argument: 'db_url'
+
+archtool requires a no-argument __init__. Use injector.register(InterfaceABC,
+your_instance) before inject() to provide instances that need constructor arguments.
+```
+
+**Fix:** pre-register the instance via `register()` before calling `inject()`.
 
 ---
 
