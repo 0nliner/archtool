@@ -1349,12 +1349,14 @@
    <code>"myproject.app.users.interfaces.UserRepoABC" → UserRepo()</code></li>
 </ol>
 <p>Затем <code>DomainLayer</code> делает то же самое для <code>ABCService</code> / <code>services.py</code>.</p>
-<p><strong>Между проходами — топологическая сортировка и обнаружение циклов:</strong></p>
+<p><strong>Между проходами — топологическая сортировка:</strong></p>
 <p>До того как вызвать хоть один <code>setattr</code>, archtool сортирует зарегистрированные компоненты так, чтобы каждая зависимость всегда проводилась раньше компонента, который её использует. Это DFS-based топологическая сортировка по графу зависимостей.</p>
-<p>Если граф содержит цикл (<code>ServiceA</code> нужен <code>ServiceB</code>, а <code>ServiceB</code> нужен <code>ServiceA</code>), archtool немедленно бросает <code>CircularDependencyError</code> — до того как тронуть какой-либо объект — с полным путём цикла в сообщении:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>CircularDependencyError: Circular dependency detected:
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>ServiceA → ServiceB → ServiceA
+<p>Если граф содержит цикл (<code>ServiceA</code> зависит от <code>ServiceB</code>, <code>ServiceB</code> зависит от <code>ServiceA</code>), archtool <strong>не падает</strong> — в двухпроходной схеме все объекты уже созданы, поэтому циклические <code>setattr</code>-вызовы абсолютно валидны. Вместо этого один раз выводится <code>WARNING</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>[archtool] WARNING Circular dependency detected: ServiceA → ServiceB → ServiceA.
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Wiring will succeed because all objects are already instantiated, but mutual
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>method recursion may cause infinite loops at runtime.
 </code></pre></div>
+<p>Это сигнал о дизайне, а не ошибка. Циклическая зависимость часто означает, что два компонента взяли на себя слишком много ответственностей и их стоит разделить.</p>
 <p><strong>Проход 2 — внедрение:</strong></p>
 <p>Компоненты обрабатываются в топологическом порядке (сначала самые глубокие зависимости). Для каждого экземпляра archtool читает аннотации его класса. Для <code>UserService</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>vars(UserService).__annotations__ == {&quot;repo&quot;: UserRepoABC}

@@ -1347,11 +1347,14 @@
 <p>No — archtool enforces <strong>one implementation per interface per module</strong>. If two concrete classes both inherit from the same ABC in the same module, <code>MultipleRealizationsException</code> is raised at assembly time. This is by design: the whole point is unambiguous wiring.</p>
 <hr />
 <h2 id="what-happens-if-theres-a-circular-dependency">What happens if there's a circular dependency?</h2>
-<p>archtool detects cycles <strong>before</strong> Pass 2 starts, via a DFS topological sort. If <code>ServiceA</code> depends on <code>ServiceB</code> and <code>ServiceB</code> depends on <code>ServiceA</code>, you get:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>CircularDependencyError: Circular dependency detected:
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>ServiceA → ServiceB → ServiceA
+<p>Nothing breaks. In archtool's two-pass scheme all objects are instantiated in Pass 1 before any wiring happens in Pass 2, so <code>ServiceA.dep = service_b</code> and <code>ServiceB.dep = service_a</code> are valid <code>setattr</code> calls — both objects already exist.</p>
+<p>archtool does log a <code>WARNING</code> once per <code>inject()</code> call to flag the cycle:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>[archtool] WARNING Circular dependency detected: ServiceA → ServiceB → ServiceA.
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Wiring will succeed because all objects are already instantiated, but mutual
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>method recursion may cause infinite loops at runtime.
 </code></pre></div>
-<p>No <code>setattr</code> has been called yet, so the container is clean. To break the cycle: either introduce a shared interface that one side depends on, or pre-register one of the instances via <code>injector.register()</code> before calling <code>inject()</code>.</p>
+<p>This is a <strong>design signal</strong>: if <code>ServiceA.method()</code> calls <code>self.dep.method()</code> which in turn calls back into <code>ServiceA</code>, that will loop infinitely. The warning is there so you notice the cycle exists — not to block wiring.</p>
+<p>Enable the warning with <code>verbose=True</code> or <code>ARCHTOOL_VERBOSE=1</code>.</p>
 <hr />
 <h2 id="my-class-has-constructor-arguments-archtool-cant-instantiate-it">My class has constructor arguments — archtool can't instantiate it</h2>
 <p>archtool calls <code>Class()</code> with no arguments. If your class needs them, pre-register the fully constructed instance:</p>

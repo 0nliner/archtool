@@ -1556,16 +1556,11 @@
 <p>Raised by the <code>archtool validate</code> CLI command when an <code>AppModule</code> fails structural checks (e.g. missing <code>interfaces.py</code>).</p>
 <hr />
 <h3 id="circulardependencyerror"><code>CircularDependencyError</code></h3>
-<p>Raised during <code>inject()</code> when the dependency graph contains a cycle. archtool runs a topological sort (DFS) before Pass 2. If a back-edge is found the sort is aborted immediately — <strong>before any <code>setattr</code> is called</strong> — so the container is left in a clean state.</p>
-<p>The exception message includes the full cycle path with short class names and the full serialised keys:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>CircularDependencyError: Circular dependency detected:
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>OrderService → PaymentService → OrderService
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Full keys: [&#39;myproject.app.orders.interfaces.OrderServiceABC&#39;,
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>            &#39;myproject.app.payments.interfaces.PaymentServiceABC&#39;,
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>            &#39;myproject.app.orders.interfaces.OrderServiceABC&#39;]
+<p>Available as a public exception class for use in custom tooling or framework extensions. archtool itself <strong>does not raise</strong> this during normal <code>inject()</code> — cycles are tolerated and produce a <code>WARNING</code> log instead (see <a href="../../guide/faq/#what-happens-if-theres-a-circular-dependency">FAQ</a>).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">archtool.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">CircularDependencyError</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">raise</span> <span class="n">CircularDependencyError</span><span class="p">([</span><span class="s2">&quot;key.A&quot;</span><span class="p">,</span> <span class="s2">&quot;key.B&quot;</span><span class="p">,</span> <span class="s2">&quot;key.A&quot;</span><span class="p">])</span>
 </code></pre></div>
-<p><strong>Fix:</strong> break the cycle by introducing a shared interface that one side depends on, or pre-register one of the components via <code>injector.register()</code> before <code>inject()</code>.</p>
 <hr />
 <h3 id="instantiationerror"><code>InstantiationError</code></h3>
 <p>Raised when archtool cannot call <code>impl_class()</code> with no arguments during Pass 1.</p>

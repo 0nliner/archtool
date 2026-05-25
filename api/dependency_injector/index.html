@@ -1446,7 +1446,7 @@
 <p><strong>Layer enforcement</strong> (when <code>enforce_layers=True</code>). After Pass 1, archtool checks that no component depends on a component from a higher layer. Raises <code>TopLevelLayerUsingException</code> if a boundary is violated. This check runs before any injection, so the container is still clean on failure.</p>
 </li>
 <li>
-<p><strong>Topological sort + cycle detection.</strong> Before any <code>setattr</code> is called, archtool performs a DFS-based topological sort of the dependency graph to determine injection order. If a cycle is detected, raises <code>CircularDependencyError</code> immediately with the full cycle path.</p>
+<p><strong>Topological sort.</strong> Before any <code>setattr</code> is called, archtool performs a DFS-based topological sort of the dependency graph to determine injection order. If a cycle is detected, a <code>WARNING</code> is logged — cycles are valid in the two-pass scheme (all objects already exist) but may indicate mutual method recursion at runtime.</p>
 </li>
 <li>
 <p><strong>Pass 2 — injection.</strong> Components are processed in topological order (deepest dependencies first). For each instance archtool reads class-level <code>__annotations__</code> and calls <code>setattr(instance, attr_name, dependency_instance)</code> for each annotated dependency.</p>

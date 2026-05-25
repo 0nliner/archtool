@@ -1347,12 +1347,14 @@
    <code>"myproject.app.users.interfaces.UserRepoABC" → UserRepo()</code></li>
 </ol>
 <p>Then <code>DomainLayer</code> repeats the same for <code>ABCService</code> / <code>services.py</code>.</p>
-<p><strong>Between passes — topological sort and cycle detection:</strong></p>
+<p><strong>Between passes — topological sort:</strong></p>
 <p>Before any <code>setattr</code> is called, archtool sorts registered components so that each dependency is always wired before the component that uses it. This is a DFS-based topological sort over the dependency graph.</p>
-<p>If the graph contains a cycle (<code>ServiceA</code> needs <code>ServiceB</code> needs <code>ServiceA</code>), archtool raises <code>CircularDependencyError</code> immediately — before touching any object — with the full cycle path in the message:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>CircularDependencyError: Circular dependency detected:
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>ServiceA → ServiceB → ServiceA
+<p>If the graph contains a cycle (<code>ServiceA</code> depends on <code>ServiceB</code>, <code>ServiceB</code> depends on <code>ServiceA</code>), archtool <strong>does not fail</strong> — in the two-pass scheme all objects are already instantiated, so circular <code>setattr</code> calls are perfectly valid. Instead, a <code>WARNING</code> is logged once per <code>inject()</code> call:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>[archtool] WARNING Circular dependency detected: ServiceA → ServiceB → ServiceA.
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Wiring will succeed because all objects are already instantiated, but mutual
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>method recursion may cause infinite loops at runtime.
 </code></pre></div>
+<p>This is a design signal, not an error. Circular wiring often indicates that two components share too many responsibilities and could be split.</p>
 <p><strong>Pass 2 — inject:</strong></p>
 <p>Components are processed in topological order (deepest dependencies first). For each instance archtool reads its class-level annotations. For <code>UserService</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>vars(UserService).__annotations__ == {&quot;repo&quot;: UserRepoABC}

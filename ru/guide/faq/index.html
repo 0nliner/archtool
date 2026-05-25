@@ -1381,11 +1381,14 @@
 <p>Нет — archtool требует <strong>одну реализацию на интерфейс на модуль</strong>. Если два конкретных класса наследуют один ABC в одном модуле, при сборке бросается <code>MultipleRealizationsException</code>.</p>
 <hr />
 <h2 id="_4">Что будет, если есть циклическая зависимость?</h2>
-<p>archtool обнаруживает циклы <strong>до</strong> начала прохода 2 через DFS-топологическую сортировку. Если <code>ServiceA</code> зависит от <code>ServiceB</code>, а <code>ServiceB</code> — от <code>ServiceA</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>CircularDependencyError: Circular dependency detected:
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>ServiceA → ServiceB → ServiceA
+<p>Ничего не сломается. В двухпроходной схеме archtool все объекты создаются в проходе 1 до начала разводки в проходе 2, поэтому <code>ServiceA.dep = service_b</code> и <code>ServiceB.dep = service_a</code> — это валидные <code>setattr</code>-вызовы на уже существующих объектах.</p>
+<p>archtool выводит <code>WARNING</code> один раз за вызов <code>inject()</code>, чтобы сигнализировать о цикле:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>[archtool] WARNING Circular dependency detected: ServiceA → ServiceB → ServiceA.
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>Wiring will succeed because all objects are already instantiated, but mutual
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>method recursion may cause infinite loops at runtime.
 </code></pre></div>
-<p>Ни одного <code>setattr</code> ещё не вызвано — контейнер остаётся чистым. Чтобы разорвать цикл: введи общий интерфейс, от которого зависит одна из сторон, или предзарегистрируй один из экземпляров через <code>injector.register()</code> до <code>inject()</code>.</p>
+<p>Это <strong>сигнал о дизайне</strong>: если <code>ServiceA.method()</code> вызывает <code>self.dep.method()</code>, который в свою очередь вызывает обратно в <code>ServiceA</code> — будет бесконечный цикл в рантайме. Warning нужен чтобы ты заметил цикл — не чтобы заблокировать разводку.</p>
+<p>Включи предупреждение через <code>verbose=True</code> или <code>ARCHTOOL_VERBOSE=1</code>.</p>
 <hr />
 <h2 id="_5">Как посмотреть что было внедрено?</h2>
 <p>После <code>inject()</code> проверь <code>injector.dependencies</code>:</p>
