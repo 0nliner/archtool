@@ -1,4 +1,7 @@
-class ABCView:
+from abc import ABC
+
+
+class ABCView(ABC):  # noqa: B024
     """
     Представление. Используйте для presentation layer
     """
@@ -6,16 +9,19 @@ class ABCView:
     ...
 
 
-class ABCController: ...
+class ABCController(ABC):  # noqa: B024
+    ...
 
 
-class ABCService: ...
+class ABCService(ABC):  # noqa: B024
+    ...
 
 
-class ABCRepo: ...
+class ABCRepo(ABC):  # noqa: B024
+    ...
 
 
-class ABCFacade:
+class ABCFacade(ABC):  # noqa: B024
     """
     Может быть использован для классов, реализующих паттерн фасад, например
     класс взаимодействующий со сторонним api

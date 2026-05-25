@@ -31,6 +31,7 @@ dev = [
     "pytest-cov>=5.0",
     "ruff>=0.4",
     "mypy>=1.10",
+    "pre-commit>=3.7",
 ]
 
 [tool.pytest.ini_options]
@@ -40,6 +41,35 @@ python_classes = "Test*"
 python_functions = "test_*"
 norecursedirs = [".git", ".venv", "build", "dist", "__pycache__"]
 addopts = "-q --tb=short"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "T20"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+"""
+
+_PRE_COMMIT_CONFIG = """\
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.13
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.16.0
+    hooks:
+      - id: mypy
+        args: [--ignore-missing-imports]
+        additional_dependencies: ["archtool"]
 """
 
 _GITIGNORE = """\
@@ -373,6 +403,7 @@ def init(name: str, path: str) -> None:
     module_path = root / "app" / "example_module"
 
     _write(root / "pyproject.toml", _PYPROJECT.format(name=name))
+    _write(root / ".pre-commit-config.yaml", _PRE_COMMIT_CONFIG)
     _write(root / ".gitignore", _GITIGNORE)
     _write(root / "Makefile", _MAKEFILE)
     _write(root / "Dockerfile", _DOCKERFILE)
@@ -416,6 +447,7 @@ def init(name: str, path: str) -> None:
             f"Next steps:\n"
             f"  cd {name}\n"
             f"  uv sync --group dev\n"
+            f"  git init && git add -A && pre-commit install\n"
             f"  make test\n"
             f"  make validate-arch",
             expand=False,
