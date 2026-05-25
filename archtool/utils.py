@@ -6,8 +6,9 @@ import logging
 import typing
 from abc import ABCMeta
 from collections.abc import Callable
+from contextvars import ContextVar
 from importlib import import_module
-from inspect import getfile, getmro, isabstract, isclass
+from inspect import getfile, isabstract, isclass
 from pathlib import Path
 from re import sub
 
@@ -28,7 +29,9 @@ logger = logging.getLogger("archtool")
 
 # ── Project root resolution ───────────────────────────────────────────────────
 
-_project_root: Path | None = None
+# ContextVar gives per-task isolation in async code and per-thread isolation
+# when tests run in threads, avoiding cross-test pollution.
+_project_root: ContextVar[Path | None] = ContextVar("_project_root", default=None)
 
 
 def set_project_root(root: Path) -> None:
@@ -37,8 +40,7 @@ def set_project_root(root: Path) -> None:
     Called once by :class:`~archtool.dependency_injector.DependencyInjector`
     during initialisation. Safe to call multiple times (e.g. in tests).
     """
-    global _project_root
-    _project_root = root.resolve()
+    _project_root.set(root.resolve())
 
 
 def _detect_project_root() -> Path:
@@ -52,7 +54,8 @@ def _detect_project_root() -> Path:
 
 def get_project_root() -> Path:
     """Return the active project root (set or auto-detected)."""
-    return _project_root if _project_root is not None else _detect_project_root()
+    root = _project_root.get()
+    return root if root is not None else _detect_project_root()
 
 
 # ── Import path resolution ─────────────────────────────────────────────────
@@ -113,9 +116,9 @@ def string_to_snake_case(string: str) -> str:
     ).lower()
 
 
-def inherits_from(child: type, parent_name: str) -> bool:
-    if isclass(child):
-        return parent_name in [c.__name__ for c in getmro(child)[1:]]
+def inherits_from(child: type, parent: type) -> bool:
+    if isclass(child) and child is not parent:
+        return issubclass(child, parent)
     return False
 
 
@@ -187,7 +190,7 @@ def get_subclasses_from_module(
     for key, obj in vars(module_obj).items():
         if not isclass(obj) or key.startswith("__"):
             continue
-        if not inherits_from(child=obj, parent_name=superclass.__name__):
+        if not inherits_from(child=obj, parent=superclass):
             continue
         if obj is superclass:
             continue

@@ -9,8 +9,10 @@ from typing import TypeVar
 
 from archtool.components.default_component import ComponentPattern
 from archtool.exceptions import (
+    CircularDependencyError,
     DependencyDoesNotRegistred,
     DependencyDuplicate,
+    InstantiationError,
     TopLevelLayerUsingException,
 )
 from archtool.global_types import DEPENDENCY_KEY, AppModules, ContainerT
@@ -132,7 +134,10 @@ class DependencyInjector(DependencyInjectorInterface):
                     if serialised in self.dependencies:
                         _lib_logger.debug("skip %s — already manually registered", iface.__name__)
                         continue
-                    instance = impl_class()
+                    try:
+                        instance = impl_class()
+                    except TypeError as exc:
+                        raise InstantiationError(impl_class.__name__, exc) from exc
                     self.register(key=iface, value=instance)
                     self._component_to_layer[serialised] = layer
                     _lib_logger.debug(
@@ -146,8 +151,10 @@ class DependencyInjector(DependencyInjectorInterface):
         if self._enforce_layers:
             self._check_layer_violations()
 
-        # ── pass 2: inject dependencies into every registered instance ────────
-        for key, instance in self.dependencies.items():
+        # ── pass 2: inject in topological order (deepest deps first) ─────────
+        ordered = self._topological_order()
+        for key in ordered:
+            instance = self.dependencies[key]
             if self._allowed_nested.get(key, True):
                 self._inject_into(instance)
 
@@ -249,6 +256,39 @@ class DependencyInjector(DependencyInjectorInterface):
                         dependency_name=dep.asked.split(".")[-1],
                         dependency_layer=type(dep_layer).__name__,
                     )
+
+    def _topological_order(self) -> list[str]:
+        """Return dependency keys sorted so every node comes after its dependencies.
+
+        Uses iterative DFS. Raises :exc:`~archtool.exceptions.CircularDependencyError`
+        if the graph contains a cycle.
+        """
+        visiting: set[str] = set()
+        visited: set[str] = set()
+        order: list[str] = []
+
+        def visit(key: str, path: list[str]) -> None:
+            if key in visited:
+                return
+            if key in visiting:
+                cycle_start = path.index(key)
+                raise CircularDependencyError(path[cycle_start:] + [key])
+            visiting.add(key)
+            path.append(key)
+            instance = self.dependencies.get(key)
+            if instance is not None:
+                for dep in get_dependencies(instance):
+                    if dep.asked in self.dependencies:
+                        visit(dep.asked, path)
+            path.pop()
+            visiting.discard(key)
+            visited.add(key)
+            order.append(key)
+
+        for key in list(self.dependencies):
+            visit(key, [])
+
+        return order
 
     def _inject_into(self, container: ContainerT) -> None:
         for dep in get_dependencies(container):

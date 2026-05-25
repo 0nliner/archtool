@@ -5,8 +5,10 @@ from __future__ import annotations
 import pytest
 from archtool.exceptions import (
     ArchToolError,
+    CircularDependencyError,
     DependencyDuplicate,
     DependencyDoesNotRegistred,
+    InstantiationError,
     RealizationNotFound,
     RealizationNotFount,  # backward-compat alias
     MultipleRealizationsException,
@@ -54,3 +56,23 @@ def test_module_validation_error_lists_problems():
     msg = str(exc)
     assert "interfaces.py" in msg
     assert "repos.py" in msg
+
+
+def test_circular_dependency_error_shows_cycle():
+    cycle = [
+        "myproject.app.a.interfaces.ServiceA",
+        "myproject.app.b.interfaces.ServiceB",
+        "myproject.app.a.interfaces.ServiceA",
+    ]
+    exc = CircularDependencyError(cycle)
+    msg = str(exc)
+    assert "ServiceA" in msg
+    assert "ServiceB" in msg
+    assert "→" in msg
+
+
+def test_instantiation_error_mentions_class_and_hint():
+    exc = InstantiationError("UserService", TypeError("__init__ requires 1 argument"))
+    msg = str(exc)
+    assert "UserService" in msg
+    assert "injector.register" in msg

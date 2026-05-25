@@ -97,3 +97,37 @@ class AnnotationsNotResolvableError(ArchToolError):
     Most likely cause: ``from __future__ import annotations`` combined with a
     forward reference that cannot be resolved at DI assembly time.
     """
+
+
+class CircularDependencyError(ArchToolError):
+    """A circular dependency was detected during DI assembly.
+
+    archtool performs a topological sort before Pass 2 injection. If the
+    dependency graph contains a cycle, assembly is aborted immediately.
+    """
+
+    def __init__(self, cycle: list[str]) -> None:
+        path = " → ".join(c.split(".")[-1] for c in cycle)
+        super().__init__(
+            f"Circular dependency detected: {path}\n\n"
+            f"Full keys: {cycle}\n\n"
+            f"Break the cycle by introducing an interface that one side depends on, "
+            f"or pre-register one of the components via injector.register() before inject()."
+        )
+
+
+class InstantiationError(ArchToolError):
+    """A concrete implementation could not be instantiated with no arguments.
+
+    archtool calls ``impl_class()`` during Pass 1. If the constructor requires
+    arguments, pre-register the instance via ``injector.register()`` before
+    calling ``inject()``.
+    """
+
+    def __init__(self, cls_name: str, original: Exception) -> None:
+        super().__init__(
+            f"Cannot instantiate '{cls_name}': {original}\n\n"
+            f"archtool requires a no-argument __init__. "
+            f"Use injector.register(InterfaceABC, your_instance) before inject() "
+            f"to provide instances that need constructor arguments."
+        )
