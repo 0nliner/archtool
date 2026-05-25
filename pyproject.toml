@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "archtool"
-version = "2.0.0"
-description = "Dependency injection and layered architecture enforcement for Python projects"
+version = "2.0.1"
+description = "Auto-wiring DI + layer enforcement for Python. Define interfaces, write implementations — archtool assembles everything."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Aleksandr Chudaikin", email = "aleksandrchudaikindev@gmail.com" }]

@@ -1,126 +1,134 @@
-![Frame 3(2)](https://github.com/user-attachments/assets/df1e1811-1dc9-4c73-8115-632487401af9)
-# archtool documentation
+# archtool
 
-**Преимущества**
-- **Dependency Injection** - управление зависимостями между компонентами  
--  **Контроль слоёв** - гарантия однонаправленных импортов  
-- **ISP Compliance** - принудительное разделение интерфейсов  
-- **Мультиархитектура** - поддержка Clean Architecture, ETL, микросервисов
-- Чёткое разделение между API эндпоинтами и бизнес-логикой
-- Автоматическая валидация зависимостей
-- Поддержка async/await
-- Интеграция с django и fast-api
+**Auto-wiring dependency injection and layer enforcement for Python.**  
+Define interfaces. Write implementations. archtool assembles everything at startup — zero registration code, zero wiring boilerplate.
+
+[![PyPI](https://img.shields.io/pypi/v/archtool?color=3e9454)](https://pypi.org/project/archtool)
+[![CI](https://github.com/0nliner/archtool/actions/workflows/ci.yml/badge.svg)](https://github.com/0nliner/archtool/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/pypi/pyversions/archtool?color=3e9454)](https://pypi.org/project/archtool)
+[![MIT](https://img.shields.io/badge/license-MIT-3e9454)](https://github.com/0nliner/archtool/blob/main/LICENSE)
 
 ---
-## Установка
+
+## The problem
+
+Every Python backend eventually grows into this:
+
+```python
+# entrypoints/run.py
+user_repo = UserRepo()
+order_repo = OrderRepo()
+user_service = UserService()
+user_service.repo = user_repo          # don't forget this
+order_service = OrderService()
+order_service.repo = order_repo
+order_service.user_service = user_service  # or this
+# ... 40 more lines
+```
+
+Manual wiring doesn't scale. Every new dependency means touching the entrypoint. Every new dev breaks it.
+
+## The solution
+
+```python
+from pathlib import Path
+from archtool.dependency_injector import DependencyInjector
+from archtool.global_types import AppModule
+
+injector = DependencyInjector(
+    modules_list=[
+        AppModule("app.users"),
+        AppModule("app.orders"),
+        AppModule("app.payments"),
+    ],
+    project_root=Path(__file__).parent.parent,
+)
+injector.inject()
+```
+
+archtool scans your modules, discovers every interface–implementation pair, instantiates them in dependency order, and wires everything together.
+
+---
+
+## How it works
+
+**Declare the dependency as a class annotation on the concrete class:**
+
+```python
+# app/orders/services.py
+from app.users.interfaces import UserServiceABC   # cross-module dep
+from .interfaces import OrderServiceABC, OrderRepoABC
+
+class OrderService(OrderServiceABC):
+    repo: OrderRepoABC        # archtool sets this
+    user_svc: UserServiceABC  # and this — from another module
+
+    def place(self, user_id: str, items: list) -> dict:
+        user = self.user_svc.get(user_id)
+        return {"user": user, "items": items}
+```
+
+**Two-pass injection algorithm:**
+
+1. **Pass 1** — scans `interfaces.py` in each module, finds abstract/concrete pairs, instantiates concretions, builds the registry
+2. **Pass 2** — reads class-level annotations from each instance, looks up the registry, calls `setattr`
+
+No container class. No decorator. No `__init__` parameters. If the class is in the right file and inherits the right base — it's wired.
+
+---
+
+## Layer enforcement
+
+Declare your layers and archtool enforces boundaries **at startup**:
+
+```python
+injector = DependencyInjector(
+    modules_list=[...],
+    layers=default_layers,  # Infrastructure → Domain → Application → Presentation
+)
+injector.inject()  # raises TopLevelLayerUsingException if a boundary is crossed
+```
+
+A service depending on a controller, a domain class importing infrastructure directly — caught before they reach production.
+
+---
+
+## Install
+
 ```bash
 pip install archtool
 ```
 
----
-
-## 🌐 Framework Integration
-### Django Support
-archtool помогает организовать Django-проекты в соответствии с Clean Architecture, упрощая:
-- Постепенный переход от монолитной структуры
-- Вынос бизнес-логики из views/forms
-- Интеграцию с современными решениями (FastAPI, AIOHTTP)
-
-**Пример структуры**:
-```
-myproject/
-├── archtool_bundle/            # django app, отвечающий за совместимость с archtool 
-│   ├── interfaces.py
-│   ├── controllers.py
-│   ├── services.py
-│   └── repos.py
-├── app2/
-│   ├── interfaces.py
-│   ├── controllers.py
-│   ├── services.py
-│   └── repos.py
-├── entrypoints/                  # точки входа в приложение
-│   └── fastapi_app.py
-```
-
-**Интеграция**:
-документация в активной разработке 
-
-
-### FastAPI Integration
-Создавайте хорошо структурированные API с автоматическим DI:
-Документация в активной разработке
+Supports Python **3.10 · 3.11 · 3.12 · 3.13**.
 
 ---
 
-## 📚 Examples
+## Quickstart
 
-| Example Type       | Description                     |
-|--------------------|---------------------------------|
-| Django Migration   | `examples/django_migration/`   |
-| FastAPI Microservice| `examples/fastapi_service/`    |
+```bash
+archtool init myapp
+cd myapp
+pip install -e ".[dev]"
+archtool add-module orders
+archtool add-module payments
+python entrypoints/run.py
 ```
 
-
-
-### Архитектурные слои
-```python
-# Clean Architecture (по Роберту Мартину)
-class InfrastructureLayer(Layer):
-    """Работа с БД, внешние API"""
-    depends_on = None
-    
-    class Components:
-        repos = ComponentPattern(
-            module_name_regex="repos",
-            superclass=ABCRepo
-        )
-
-class DomainLayer(Layer):
-    """Ядро системы: модели и бизнес-логика"""
-    depends_on = InfrastructureLayer
-    
-    class Components:
-        services = ComponentPattern(
-            module_name_regex="services",
-            superclass=ABCService
-        )
-
-class ApplicationLayer(Layer):
-    """Оркестрация workflow"""
-    depends_on = DomainLayer
-    
-    class Components:
-        controllers = ComponentPattern(
-            module_name_regex="controllers",
-            superclass=ABCController
-        )
-
-class PresentationLayer(Layer):
-    """API и пользовательские интерфейсы"""
-    depends_on = ApplicationLayer
-    
-    class Components:
-        views = ComponentPattern(
-            module_name_regex="views",
-            superclass=ABCView
-        )
-```
+`archtool init` scaffolds a full layered-architecture project. `archtool add-module` creates the module files and auto-registers it — no manual edits required.
 
 ---
 
-### Преимущества подхода
-1. **Снижение связанности**  
-   Изоляция слоёв через strict import rules (DIP)
+## Documentation
 
-2. **Тестируемость**  
-   Легкое мокирование через DI-контейнер
+**[0nliner.github.io/archtool](https://0nliner.github.io/archtool)**
 
-3. **Гибкость архитектуры**  
-   Кастомные слои для любых сценариев
+- [Quickstart](https://0nliner.github.io/archtool/guide/quickstart/) — working project in 5 minutes
+- [How it works](https://0nliner.github.io/archtool/guide/concepts/) — two-pass injection explained
+- [Layer enforcement](https://0nliner.github.io/archtool/guide/layers/) — clean architecture built in
+- [Comparison](https://0nliner.github.io/archtool/guide/comparison/) — vs dependency-injector, injector, manual DI
 
-4. **Валидация**  
-   Автоматическая проверка правил импортов
+---
 
-5. **Документирование**  
-   Явная структура проекта = живая документация
+## License
+
+MIT — [Чудайкин Александр](https://github.com/0nliner) · Бюро автоматизации процессов
