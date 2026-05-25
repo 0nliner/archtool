@@ -1,10 +1,6 @@
 from archtool.components.default_component import ComponentPattern
 from archtool.layers import Layer
-
-from archtool.layers.default_layer_interfaces import (ABCView,
-                                                      ABCService,
-                                                      ABCRepo,
-                                                      ABCController)
+from archtool.layers.default_layer_interfaces import ABCController, ABCRepo, ABCService, ABCView
 
 # TODO:
 # class ComponentsModule:
@@ -20,11 +16,11 @@ class InfrastructureLayer(Layer):
     """
     Слой инфраструктуры
     """
+
     depends_on = None
 
     class Components:
-        repos = ComponentPattern(module_name_regex="repos",
-                                 superclass=ABCRepo)
+        repos = ComponentPattern(module_name_regex="repos", superclass=ABCRepo)
 
         #  TODO:
         # integrations = ComponentsModule(module_import_path=)
@@ -34,33 +30,33 @@ class DomainLayer(Layer):
     """
     Слой бизнеслогики
     """
+
     depends_on = InfrastructureLayer
 
     class Components:
-        services = ComponentPattern(module_name_regex="services",
-                                    superclass=ABCService)
+        services = ComponentPattern(module_name_regex="services", superclass=ABCService)
 
 
 class ApplicationLayer(Layer):
     """
     Слой приложения
     """
+
     depends_on = DomainLayer
 
     class Components:
-        controllers = ComponentPattern(module_name_regex="controllers",
-                                       superclass=ABCController)
+        controllers = ComponentPattern(module_name_regex="controllers", superclass=ABCController)
 
 
 class PresentationLayer(Layer):
     """
     Слой отображения
     """
+
     depends_on = ApplicationLayer
 
     class Components:
-        views = ComponentPattern(module_name_regex="views",
-                                 superclass=ABCView)
+        views = ComponentPattern(module_name_regex="views", superclass=ABCView)
 
 
 # Ordered from outermost to innermost so inject() processes them top-down.

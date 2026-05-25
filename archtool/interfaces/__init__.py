@@ -1,2 +1,2 @@
-from .dependency_injector import DependencyInjectorInterface
-from .layer import LayerInterface
+from .dependency_injector import DependencyInjectorInterface as DependencyInjectorInterface
+from .layer import LayerInterface as LayerInterface

@@ -50,7 +50,7 @@ def graph(project_root: str, fmt: str) -> None:
         archtool graph --format dot | dot -Tsvg > deps.svg
     """
     from archtool.dependency_injector import DependencyInjector
-    from archtool.utils import get_dependencies, serialize_dep_key
+    from archtool.utils import get_dependencies
 
     root = Path(project_root).resolve()
     if str(root) not in sys.path:
@@ -70,11 +70,11 @@ def graph(project_root: str, fmt: str) -> None:
         injector.inject()
     except Exception as exc:
         console.print(f"[red]Assembly failed:[/red] {exc}")
-        raise SystemExit(1)
+        raise SystemExit(1) from exc
 
     # build edges: instance → [dependency instances]
     edges: list[tuple[str, str]] = []
-    for key, instance in injector._dependencies.items():
+    for _key, instance in injector._dependencies.items():
         cls_name = type(instance).__name__
         for dep in get_dependencies(instance):
             dep_inst = injector._dependencies.get(dep.asked)
@@ -93,7 +93,7 @@ def graph(project_root: str, fmt: str) -> None:
     tree = Tree("[bold]archtool dependency graph[/bold]")
     nodes: dict[str, Tree] = {}
 
-    for key, instance in injector._dependencies.items():
+    for _key, instance in injector._dependencies.items():
         cls_name = type(instance).__name__
         if cls_name not in nodes:
             nodes[cls_name] = tree.add(f"[cyan]{cls_name}[/cyan]")
@@ -103,7 +103,7 @@ def graph(project_root: str, fmt: str) -> None:
             nodes[src].add(f"[dim]→[/dim] {dst}")
 
     if not edges and injector._dependencies:
-        for key, instance in injector._dependencies.items():
+        for _key, instance in injector._dependencies.items():
             tree.add(f"[cyan]{type(instance).__name__}[/cyan] [dim](no deps)[/dim]")
 
     console.print(tree)

@@ -7,12 +7,16 @@ import os
 from pathlib import Path
 from typing import TypeVar
 
-from archtool.exceptions import DependencyDuplicate, DependencyDoesNotRegistred, TopLevelLayerUsingException
+from archtool.components.default_component import ComponentPattern
+from archtool.exceptions import (
+    DependencyDoesNotRegistred,
+    DependencyDuplicate,
+    TopLevelLayerUsingException,
+)
+from archtool.global_types import DEPENDENCY_KEY, AppModules, ContainerT
 from archtool.interfaces import DependencyInjectorInterface
 from archtool.layers.default_layers import default_layers
 from archtool.layers.di_basic_layer import Layer
-from archtool.components.default_component import ComponentPattern
-from archtool.global_types import AppModules, ContainerT, DEPENDENCY_KEY
 from archtool.utils import (
     get_all_interfaces_and_realizations,
     get_dependencies,
@@ -63,9 +67,7 @@ class DependencyInjector(DependencyInjectorInterface):
                 for h in _lib_logger.handlers
             ):
                 _handler = logging.StreamHandler()
-                _handler.setFormatter(
-                    logging.Formatter("[archtool] %(levelname)s %(message)s")
-                )
+                _handler.setFormatter(logging.Formatter("[archtool] %(levelname)s %(message)s"))
                 _lib_logger.addHandler(_handler)
             _lib_logger.setLevel(logging.DEBUG)
 
@@ -128,9 +130,7 @@ class DependencyInjector(DependencyInjectorInterface):
                 for iface, impl_class in pairs.items():
                     serialised = serialize_dep_key(iface)
                     if serialised in self.dependencies:
-                        _lib_logger.debug(
-                            "skip %s — already manually registered", iface.__name__
-                        )
+                        _lib_logger.debug("skip %s — already manually registered", iface.__name__)
                         continue
                     instance = impl_class()
                     self.register(key=iface, value=instance)

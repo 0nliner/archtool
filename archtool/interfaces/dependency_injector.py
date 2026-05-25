@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-from archtool.global_types import AppModules, DEPENDENCY_KEY
+
+from archtool.global_types import DEPENDENCY_KEY, AppModules
 
 
 class DependencyInjectorInterface(ABC):
     @abstractmethod
-    def __init__(self,
-                 modules_list: AppModules):
+    def __init__(self, modules_list: AppModules):
         """
         ARGS:
         - modules_list: список загружаемых модулей приложения
@@ -18,8 +18,7 @@ class DependencyInjectorInterface(ABC):
         """
 
     @abstractmethod
-    def get_dependency(self,
-                       key: DEPENDENCY_KEY) -> object:
+    def get_dependency(self, key: DEPENDENCY_KEY) -> object:
         """
         Ищет зависимость среди зарегистрированных
 

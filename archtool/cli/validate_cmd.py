@@ -53,9 +53,9 @@ def validate(project_root: str, verbose: bool) -> None:
     """
     from archtool.dependency_injector import DependencyInjector
     from archtool.exceptions import (
-        RealizationNotFound,
-        MultipleRealizationsException,
         DependencyDoesNotRegistred,
+        MultipleRealizationsException,
+        RealizationNotFound,
     )
     from archtool.global_types import AppModule
 

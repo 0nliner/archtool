@@ -110,20 +110,14 @@ def _register_in_apps(layers_file: Path, module_import_path: str) -> None:
     entry = f'    AppModule("{module_import_path}"),'
 
     if module_import_path in text:
-        console.print(
-            f"  [yellow]~[/yellow] '{module_import_path}' already in APPS — skipped"
-        )
+        console.print(f"  [yellow]~[/yellow] '{module_import_path}' already in APPS — skipped")
         return
 
     # insert before the closing ] of APPS
-    pattern = re.compile(r'(APPS\s*[:=][^[]*\[)(.*?)(\])', re.DOTALL)
+    pattern = re.compile(r"(APPS\s*[:=][^[]*\[)(.*?)(\])", re.DOTALL)
     match = pattern.search(text)
     if match:
-        new_text = (
-            text[: match.start(3)]
-            + "\n" + entry + "\n"
-            + text[match.start(3):]
-        )
+        new_text = text[: match.start(3)] + "\n" + entry + "\n" + text[match.start(3) :]
         layers_file.write_text(new_text, encoding="utf-8")
         console.print(
             f"  [green]✓[/green] Added AppModule('{module_import_path}') to {layers_file}"
@@ -157,10 +151,12 @@ def add_module(name: str, project_root: str) -> None:
     module_path = root / "app" / Path(*parts)
     module_import = "app." + dotted
 
-    console.print(Panel(
-        f"[bold]Adding module [cyan]{name}[/cyan][/bold]",
-        expand=False,
-    ))
+    console.print(
+        Panel(
+            f"[bold]Adding module [cyan]{name}[/cyan][/bold]",
+            expand=False,
+        )
+    )
 
     _write(module_path / "__init__.py", "")
     _write(module_path / "interfaces.py", _INTERFACES.format(pascal=pascal))
@@ -186,4 +182,6 @@ def add_module(name: str, project_root: str) -> None:
         )
 
     console.print()
-    console.print(f"[green]Module '{name}' created.[/green] Run [bold]make validate-arch[/bold] to check assembly.")
+    console.print(
+        f"[green]Module '{name}' created.[/green] Run [bold]make validate-arch[/bold] to check assembly."
+    )

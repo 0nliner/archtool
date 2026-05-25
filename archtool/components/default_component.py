@@ -1,15 +1,11 @@
 from abc import ABC
 
 
-class ComponentPatternBase:
-    ...
+class ComponentPatternBase: ...
 
 
 class ComponentPattern(ComponentPatternBase):
-    def __init__(self,
-                 module_name_regex: str,
-                 superclass: ABC,
-                 required: bool = True):
+    def __init__(self, module_name_regex: str, superclass: ABC, required: bool = True):
         """
         ARGS:
             module_name_regex - паттерн имени файла

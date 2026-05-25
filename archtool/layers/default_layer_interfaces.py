@@ -1,28 +1,24 @@
-from abc import ABC
-
-
-class ABCView(ABC):
+class ABCView:
     """
     Представление. Используйте для presentation layer
     """
+
     ...
 
 
-class ABCController(ABC):
-    ...
+class ABCController: ...
 
 
-class ABCService(ABC):
-    ...
+class ABCService: ...
 
 
-class ABCRepo(ABC):
-    ...
+class ABCRepo: ...
 
 
-class ABCFacade(ABC):
+class ABCFacade:
     """
     Может быть использован для классов, реализующих паттерн фасад, например
     класс взаимодействующий со сторонним api
     """
+
     ...

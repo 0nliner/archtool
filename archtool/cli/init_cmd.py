@@ -262,7 +262,7 @@ if __name__ == "__main__":
 """
 
 _MODULE_INIT = ""
-_MODULE_INTERFACES = '''\
+_MODULE_INTERFACES = """\
 from abc import abstractmethod
 
 from archtool.layers.default_layer_interfaces import ABCService, ABCRepo
@@ -278,9 +278,9 @@ class {pascal}RepoABC(ABCRepo):
     @abstractmethod
     def fetch_data(self) -> list[str]:
         ...
-'''
+"""
 
-_MODULE_SERVICES = '''\
+_MODULE_SERVICES = """\
 from .interfaces import {pascal}ServiceABC, {pascal}RepoABC
 
 
@@ -290,18 +290,18 @@ class {pascal}Service({pascal}ServiceABC):
     def example_action(self) -> str:
         data = self.repo.fetch_data()
         return f"processed {{len(data)}} items"
-'''
+"""
 
-_MODULE_REPOS = '''\
+_MODULE_REPOS = """\
 from .interfaces import {pascal}RepoABC
 
 
 class {pascal}Repo({pascal}RepoABC):
     def fetch_data(self) -> list[str]:
         return ["item1", "item2"]
-'''
+"""
 
-_MODULE_TEST_CONFTEST = '''\
+_MODULE_TEST_CONFTEST = """\
 import pytest
 from unittest.mock import MagicMock
 
@@ -319,16 +319,16 @@ def service(repo):
     s = {pascal}Service()
     s.repo = repo
     return s
-'''
+"""
 
-_MODULE_TEST_SERVICES = '''\
+_MODULE_TEST_SERVICES = """\
 class Test{pascal}Service:
     def test_example_action(self, service):
         result = service.example_action()
         assert isinstance(result, str)
-'''
+"""
 
-_TESTS_ASSEMBLY = '''\
+_TESTS_ASSEMBLY = """\
 \"\"\"Integration test: DI assembles without errors.\"\"\"
 
 from pathlib import Path
@@ -346,7 +346,7 @@ def test_di_assembles():
     )
     injector.inject()
     assert len(injector._dependencies) > 0
-'''
+"""
 
 
 def _write(path: Path, content: str) -> None:
@@ -410,12 +410,14 @@ def init(name: str, path: str) -> None:
     _write(root / "tests" / "test_assembly.py", _TESTS_ASSEMBLY)
 
     console.print()
-    console.print(Panel(
-        f"[bold green]Project '{name}' created![/bold green]\n\n"
-        f"Next steps:\n"
-        f"  cd {name}\n"
-        f"  uv sync --group dev\n"
-        f"  make test\n"
-        f"  make validate-arch",
-        expand=False,
-    ))
+    console.print(
+        Panel(
+            f"[bold green]Project '{name}' created![/bold green]\n\n"
+            f"Next steps:\n"
+            f"  cd {name}\n"
+            f"  uv sync --group dev\n"
+            f"  make test\n"
+            f"  make validate-arch",
+            expand=False,
+        )
+    )

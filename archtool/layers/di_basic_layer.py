@@ -1,12 +1,11 @@
 from abc import abstractmethod
-from typing import List, Generator
+from collections.abc import Generator
 from inspect import isclass
 
 from archtool.components.default_component import ComponentPatternBase
 
 
-class ValidationError(Exception):
-    ...
+class ValidationError(Exception): ...
 
 
 def is_component_pattern_base(obj):
@@ -19,19 +18,19 @@ class ComponentsGroupBase:
     """
 
     @property
-    def component_patterns(self) -> List[ComponentPatternBase]:
+    def component_patterns(self) -> list[ComponentPatternBase]:
         child_objects = dir(self)
         child_objects.remove("component_patterns")
 
         component_patterns = [
-             getattr(self, key) for key in child_objects
-             if is_component_pattern_base(type(getattr(self, key)))
+            getattr(self, key)
+            for key in child_objects
+            if is_component_pattern_base(type(getattr(self, key)))
         ]
         return component_patterns
 
     def __iter__(self) -> Generator[ComponentPatternBase, None, None]:
-        for component_pattern in self.component_patterns:
-            yield component_pattern
+        yield from self.component_patterns
 
 
 class LayerBase(type):
@@ -42,7 +41,7 @@ class LayerBase(type):
             return super_new(cls, name, bases, attrs)
 
         # проверяем обязательные поля
-        required_fields = set(["depends_on"])
+        required_fields = {"depends_on"}
         attrs_set = set(attrs.keys())
         attrs_intersection = required_fields.intersection(attrs_set)
         is_all_decleared = attrs_intersection == required_fields
@@ -50,13 +49,11 @@ class LayerBase(type):
 
         if not is_all_decleared:
             not_defined = required_fields.difference(attrs_intersection)
-            err_msg = (f"Fields {not_defined} does not"
-                       f" decleared in {attrs['__qualname__']}")
+            err_msg = f"Fields {not_defined} does not decleared in {attrs['__qualname__']}"
 
         # проверяем есть ли класс Components
         if "Components" not in attrs:
-            components_err_message = ("\n\nComponents child"
-                                      " class required, but not defined")
+            components_err_message = "\n\nComponents child class required, but not defined"
             err_msg += components_err_message
 
         if err_msg:
@@ -67,32 +64,32 @@ class LayerBase(type):
         # создаём новый класс, наследуем от ComponentsGroupBase
         # и уже существующего в наследнике
         components_subclass = attrs.pop("Components")
-        components_class = type("ComponentsGroup",
-                                (ComponentsGroupBase,
-                                 components_subclass,
-                                 object),
-                                {})
+        components_class = type(
+            "ComponentsGroup", (ComponentsGroupBase, components_subclass, object), {}
+        )
         components_instance = components_class()
 
         module = attrs.pop("__module__")
         depends_on = attrs.pop("depends_on")
 
-        new_attrs = {"__module__": module,
-                     "component_groups": components_instance,
-                     "Components": components_class,
-                     "depends_on": depends_on}
+        new_attrs = {
+            "__module__": module,
+            "component_groups": components_instance,
+            "Components": components_class,
+            "depends_on": depends_on,
+        }
 
         new_layer_class = super_new(cls, name, bases, new_attrs)
         new_layer_class.__new__ = super(object).__new__
         return new_layer_class
 
     @classmethod
-    def __or__(cls, other: 'LayerBase'):
+    def __or__(cls, other: "LayerBase"):
         return frozenset(cls, other)
 
     @property
     @abstractmethod
-    def component_groups(self) -> List[ComponentsGroupBase]:
+    def component_groups(self) -> list[ComponentsGroupBase]:
         """
         Возвращает список групп компонентов, инициализированные в рамках слоя
         """
@@ -101,5 +98,4 @@ class LayerBase(type):
 # TODO: подумать над созданием файла base.py
 
 
-class Layer(object, metaclass=LayerBase):
-    ...
+class Layer(metaclass=LayerBase): ...

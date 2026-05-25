@@ -5,11 +5,11 @@ from __future__ import annotations
 import logging
 import typing
 from abc import ABCMeta
-from inspect import getfile, getmro, isabstract, isclass
+from collections.abc import Callable
 from importlib import import_module
+from inspect import getfile, getmro, isabstract, isclass
 from pathlib import Path
 from re import sub
-from typing import Callable
 
 from archtool.exceptions import (
     CheckFailedException,
@@ -17,10 +17,10 @@ from archtool.exceptions import (
     RealizationNotFound,
 )
 from archtool.global_types import (
+    DEPENDENCY_KEY,
     AppModule,
     AppModules,
     Dependency,
-    DEPENDENCY_KEY,
     InterfaceT,
 )
 
@@ -57,6 +57,7 @@ def get_project_root() -> Path:
 
 # ── Import path resolution ─────────────────────────────────────────────────
 
+
 def resolve_import_path(obj: object | str) -> str:
     """Return the canonical dotted import path for a class or a module string.
 
@@ -86,19 +87,17 @@ def resolve_import_path(obj: object | str) -> str:
     try:
         file_path = Path(getfile(obj)).resolve()
     except (TypeError, OSError) as exc:
-        raise TypeError(
-            f"Cannot determine source file for {obj!r}: {exc}"
-        ) from exc
+        raise TypeError(f"Cannot determine source file for {obj!r}: {exc}") from exc
 
     try:
         relative = file_path.relative_to(root)
-    except ValueError:
+    except ValueError as exc:
         # file lives outside the project root (e.g. third-party library)
         raise TypeError(
             f"Object {obj!r} is defined in {file_path}, which is outside "
             f"the project root {root}. Only project-local classes can be "
             f"used as DI components."
-        )
+        ) from exc
 
     parts = (root_name,) + relative.with_suffix("").parts
     return ".".join(parts)
@@ -106,12 +105,12 @@ def resolve_import_path(obj: object | str) -> str:
 
 # ── Helpers ────────────────────────────────────────────────────────────────
 
+
 def string_to_snake_case(string: str) -> str:
-    string = sub('[<>]', '', string)
-    return '_'.join(
-        sub('([A-Z][a-z]+)', r' \1',
-        sub('([A-Z]+)', r' \1',
-        string.replace('-', ' '))).split()).lower()
+    string = sub("[<>]", "", string)
+    return "_".join(
+        sub("([A-Z][a-z]+)", r" \1", sub("([A-Z]+)", r" \1", string.replace("-", " "))).split()
+    ).lower()
 
 
 def inherits_from(child: type, parent_name: str) -> bool:
@@ -129,6 +128,7 @@ def serialize_dep_key(key: DEPENDENCY_KEY) -> str:
 
 
 # ── Dependency extraction ─────────────────────────────────────────────────
+
 
 def get_dependencies(container: object) -> list[Dependency]:
     """Extract DI dependencies from class-level annotations.
@@ -165,6 +165,7 @@ def get_dependencies(container: object) -> list[Dependency]:
 
 # ── Module scanning ────────────────────────────────────────────────────────
 
+
 def get_subclasses_from_module(
     module_path: str,
     superclass: type,
@@ -198,14 +199,13 @@ def get_subclasses_from_module(
             continue
 
         # belongs to this module or any of its subpackages
-        is_in_module = (
-            obj_path == module_absolute
-            or obj_path.startswith(module_absolute + ".")
-        )
+        is_in_module = obj_path == module_absolute or obj_path.startswith(module_absolute + ".")
         if not is_in_module:
             logger.debug(
                 "skip %s: defined in %s, not in %s",
-                obj.__name__, obj_path, module_absolute,
+                obj.__name__,
+                obj_path,
+                module_absolute,
             )
             continue
 
@@ -246,6 +246,7 @@ def get_class_instances_from_module(
 
 
 # ── Interface / realization discovery ─────────────────────────────────────
+
 
 def get_module_interfaces(module: AppModule, superclass: type) -> list[InterfaceT]:
     """Return all abstract subclasses of *superclass* from *module*.interfaces."""

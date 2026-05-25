@@ -1,1 +1,1 @@
-from .di_basic_layer import Layer
+from .di_basic_layer import Layer as Layer

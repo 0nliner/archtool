@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import click
 
-from archtool.cli.init_cmd import init
 from archtool.cli.add_module_cmd import add_module
-from archtool.cli.validate_cmd import validate
 from archtool.cli.graph_cmd import graph
+from archtool.cli.init_cmd import init
+from archtool.cli.validate_cmd import validate
 
 
 @click.group()

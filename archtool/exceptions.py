@@ -67,10 +67,8 @@ class DependencyDoesNotRegistred(ArchToolError):
     def __init__(self, key: str, registered: list[str] | None = None) -> None:
         hint = ""
         if registered:
-            hint = f"\n\nRegistered dependencies:\n" + "\n".join(f"  • {k}" for k in registered)
-        super().__init__(
-            f"Dependency '{key}' is not registered in the DI container.{hint}"
-        )
+            hint = "\n\nRegistered dependencies:\n" + "\n".join(f"  • {k}" for k in registered)
+        super().__init__(f"Dependency '{key}' is not registered in the DI container.{hint}")
 
 
 class MultipleRealizationsException(ArchToolError):
@@ -90,9 +88,7 @@ class ModuleValidationError(ArchToolError):
 
     def __init__(self, module_path: str, problems: list[str]) -> None:
         problems_str = "\n".join(f"  • {p}" for p in problems)
-        super().__init__(
-            f"Module '{module_path}' failed validation:\n{problems_str}"
-        )
+        super().__init__(f"Module '{module_path}' failed validation:\n{problems_str}")
 
 
 class AnnotationsNotResolvableError(ArchToolError):
